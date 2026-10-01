@@ -158,42 +158,42 @@ All routes are prefixed with `/api/admin`.
 | GET    | `/verifierStock/:id/stock`       | Check stock status        |
 | PATCH  | `/updateStock/:id/stock`         | Update stock quantity     |
 
-###  Packs (`/packs`)
+### 🧺 Packs (`/packs`)
 
-| Method | Endpoint                       | Description                      |
-|--------|--------------------------------|----------------------------------|
-| GET    | `/getAllPacks?page=1&limit=10` | List with pagination             |
-| GET    | `/:id`                         | Get one by ID                    |
-| POST   | `/`                            | Create pack (auto price calc)    |
-| PUT    | `/:id`                         | Update pack                      |
-| DELETE | `/:id`                         | Delete pack                      |
+| Method | Endpoint                         | Description                   |
+|--------|----------------------------------|-------------------------------|
+| GET    | `/getAllPacks?page=1&limit=10`   | List with pagination          |
+| GET    | `/getPackById/:id`               | Get one by ID                 |
+| POST   | `/createPack`                    | Create pack (auto price calc) |
+| PUT    | `/updatePack/:id`                | Update pack                   |
+| DELETE | `/deletePack/:id`                | Delete pack                   |
 
-###  Offers (`/offres`)
+### 🎁 Offers (`/offres`)
 
-| Method | Endpoint                        | Description               |
-|--------|---------------------------------|---------------------------|
-| GET    | `/getAllOffres?page=1&limit=10` | List with pagination      |
-| GET    | `/:id`                          | Get one by ID             |
-| POST   | `/`                             | Create offer              |
-| PUT    | `/:id`                          | Update offer              |
-| DELETE | `/:id`                          | Delete offer              |
+| Method | Endpoint                         | Description          |
+|--------|----------------------------------|----------------------|
+| GET    | `/getAllOffres?page=1&limit=10`  | List with pagination |
+| GET    | `/getOffreById/:id`              | Get one by ID        |
+| POST   | `/createOffre`                   | Create offer         |
+| PUT    | `/updateOffre/:id`               | Update offer         |
+| DELETE | `/deleteOffre/:id`               | Delete offer         |
 
-###  Orders (`/commandes`)
+### 🛒 Orders (`/commandes`)
 
-| Method | Endpoint                           | Description                |
-|--------|------------------------------------|----------------------------|
-| GET    | `/getAllCommandes?page=1&limit=10` | List with pagination       |
-| GET    | `/:id`                             | Get one by ID              |
-| PATCH  | `/:id/statut`                      | Update order status        |
-| PATCH  | `/:id/annuler`                     | Cancel an order            |
-| GET    | `/:id/total`                       | Recalculate order total    |
+| Method | Endpoint                               | Description             |
+|--------|----------------------------------------|-------------------------|
+| GET    | `/getAllCommandes?page=1&limit=10`     | List with pagination    |
+| GET    | `/getCommandeById/:id`                 | Get one by ID           |
+| GET    | `/calculerTotal/:id/total`             | Recalculate order total |
+| PATCH  | `/updateStatutCommande/:id/statut`     | Update order status     |
+| PATCH  | `/annulerCommande/:id/annuler`         | Cancel an order         |
 
-###  Dashboard (`/dashboard`)
+### 📊 Dashboard (`/dashboard`)
 
-| Method | Endpoint        | Description                              |
-|--------|-----------------|------------------------------------------|
-| GET    | `/`             | Global stats (products, orders, revenue) |
-| GET    | `/ventes`       | Sales stats by period (week/month/year)  |
+| Method | Endpoint                        | Description                              |
+|--------|---------------------------------|------------------------------------------|
+| GET    | `/getDashboard`                 | Global stats (products, orders, revenue) |
+| GET    | `/getStatistiquesVentes/ventes` | Sales stats by period (week/month/year)  |
 
 ---
 

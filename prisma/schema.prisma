@@ -1,0 +1,150 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Administrateur {
+  id             Int            @id @default(autoincrement())
+  nom            String
+  email          String         @unique
+  motDePasse     String
+
+  refreshTokens  RefreshToken[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("administrateurs")
+}
+
+model RefreshToken {
+  id          Int      @id @default(autoincrement())
+  token       String   @unique
+  adminId     Int
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  createdAt   DateTime @default(now())
+
+  admin       Administrateur @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model Categorie {
+  id          Int       @id @default(autoincrement())
+  nom         String    @unique
+  description String?
+
+  produits    Produit[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("categories")
+}
+
+model Produit {
+  id          Int      @id @default(autoincrement())
+  nom         String
+  categorieId Int?
+  categorie   Categorie? @relation(fields: [categorieId], references: [id])
+  taille      String?
+  prix        Float
+  stock       Int      @default(0)
+  description String?
+  imageUrl    String?
+
+  packs       PackProduit[]
+  lignes      LigneCommande[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("produits")
+}
+
+model Pack {
+  id          Int      @id @default(autoincrement())
+  nom         String
+  description String?
+  prixPack    Float
+
+  produits    PackProduit[]
+  lignes      LigneCommande[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("packs")
+}
+
+model PackProduit {
+  packId    Int
+  produitId Int
+  quantite  Int @default(1)
+
+  pack    Pack    @relation(fields: [packId], references: [id], onDelete: Cascade)
+  produit Produit @relation(fields: [produitId], references: [id], onDelete: Cascade)
+
+  @@id([packId, produitId])
+  @@map("pack_produits")
+}
+
+model Offre {
+  id                  Int      @id @default(autoincrement())
+  titre               String
+  pourcentageReduction Float
+  dateDebut           DateTime
+  dateFin             DateTime
+
+  lignes              LigneCommande[]
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("offres")
+}
+
+model Commande {
+  id               Int      @id @default(autoincrement())
+  nomClient        String
+  telephoneClient  String
+  adresseLivraison String
+  dateCommande     DateTime @default(now())
+  statut           String   @default("en_attente") // en_attente, confirmee, livree, annulee
+  total            Float    @default(0)
+
+  lignes           LigneCommande[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("commandes")
+}
+
+model LigneCommande {
+  id           Int   @id @default(autoincrement())
+  commandeId   Int
+  quantite     Int
+  prixInitiale Float
+
+  produitId    Int?
+  packId       Int?
+  offreId      Int?
+
+  commande     Commande  @relation(fields: [commandeId], references: [id], onDelete: Cascade)
+  produit      Produit?  @relation(fields: [produitId], references: [id])
+  pack         Pack?     @relation(fields: [packId], references: [id])
+  offre        Offre?    @relation(fields: [offreId], references: [id])
+
+  createdAt    DateTime  @default(now())
+
+  @@map("ligne_commandes")
+}

@@ -158,7 +158,7 @@ All routes are prefixed with `/api/admin`.
 | GET    | `/verifierStock/:id/stock`       | Check stock status        |
 | PATCH  | `/updateStock/:id/stock`         | Update stock quantity     |
 
-### 🧺 Packs (`/packs`)
+###  Packs (`/packs`)
 
 | Method | Endpoint                         | Description                   |
 |--------|----------------------------------|-------------------------------|
@@ -168,7 +168,7 @@ All routes are prefixed with `/api/admin`.
 | PUT    | `/updatePack/:id`                | Update pack                   |
 | DELETE | `/deletePack/:id`                | Delete pack                   |
 
-### 🎁 Offers (`/offres`)
+###  Offers (`/offres`)
 
 | Method | Endpoint                         | Description          |
 |--------|----------------------------------|----------------------|
@@ -178,7 +178,7 @@ All routes are prefixed with `/api/admin`.
 | PUT    | `/updateOffre/:id`               | Update offer         |
 | DELETE | `/deleteOffre/:id`               | Delete offer         |
 
-### 🛒 Orders (`/commandes`)
+###  Orders (`/commandes`)
 
 | Method | Endpoint                               | Description             |
 |--------|----------------------------------------|-------------------------|
@@ -188,7 +188,7 @@ All routes are prefixed with `/api/admin`.
 | PATCH  | `/updateStatutCommande/:id/statut`     | Update order status     |
 | PATCH  | `/annulerCommande/:id/annuler`         | Cancel an order         |
 
-### 📊 Dashboard (`/dashboard`)
+###  Dashboard (`/dashboard`)
 
 | Method | Endpoint                        | Description                              |
 |--------|---------------------------------|------------------------------------------|

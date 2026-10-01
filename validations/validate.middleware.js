@@ -50,15 +50,25 @@ const validate = (schemas) => (req, res, next) => {
   next();
 };
 
-// ─── ID param schema ────────────────────────────────────────────────────────
+// ─── ID param schema for Int IDs (Administrateur, Produit) ──────────────────
 const { z } = require("zod");
 
-const idParam = z.object({
+const intIdParam = z.object({
   id: z
     .string()
     .regex(/^\d+$/, "L'identifiant doit être un nombre entier positif.")
     .transform(Number),
 });
+
+// ─── ID param schema for UUID IDs (Pack, Offre, Commande, LigneCommande) ────
+const uuidParam = z.object({
+  id: z
+    .string({ required_error: "L'identifiant est requis." })
+    .uuid("L'identifiant doit être un UUID valide."),
+});
+
+// Keep backward-compatible alias pointing to intIdParam
+const idParam = intIdParam;
 
 // ─── Reusable pagination ──────────────────────────────────────────────────────
 // Uses coerce to convert query strings to Number directly
@@ -76,4 +86,4 @@ const paginationQuery = z.object({
     .default(10),
 });
 
-module.exports = { validate, idParam, paginationQuery };
+module.exports = { validate, idParam, intIdParam, uuidParam, paginationQuery };

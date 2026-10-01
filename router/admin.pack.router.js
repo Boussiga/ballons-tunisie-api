@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middelwhere/auth.middleware");
-const { validate, idParam } = require("../validations/validate.middleware");
+const { validate, uuidParam } = require("../validations/validate.middleware");
 const {
   listPacksSchema,
   createPackSchema,
@@ -14,15 +14,15 @@ const packController = require("../controller/admin.pack.controller");
 router.get("/getAllPacks", authMiddleware, readLimiter, validate(listPacksSchema),packController.getAllPacks);
 
 // GET by ID
-router.get("/getPackById/:id", authMiddleware, readLimiter, validate({ params: idParam }), packController.getPackById);
+router.get("/getPackById/:id", authMiddleware, readLimiter, validate({ params: uuidParam }), packController.getPackById);
 
 // POST create
 router.post("/createPack", authMiddleware, validate(createPackSchema), packController.createPack);
 
 // PUT update
-router.put("/updatePack/:id", authMiddleware, validate({ params: idParam, ...updatePackSchema }), packController.updatePack);
+router.put("/updatePack/:id", authMiddleware, validate({ params: uuidParam, ...updatePackSchema }), packController.updatePack);
 
 // DELETE remove
-router.delete("/deletePack/:id", authMiddleware, validate({ params: idParam }), packController.deletePack);
+router.delete("/deletePack/:id", authMiddleware, validate({ params: uuidParam }), packController.deletePack);
 
 module.exports = router;

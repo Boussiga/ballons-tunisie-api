@@ -7,6 +7,7 @@ const {
   loginSchema,
   refreshSchema,
   logoutSchema,
+  updateProfilSchema
 } = require("../validations/auth.validation");
 const { authLimiter } = require("../config/rateLimiter");
 const authController = require("../controller/admin.auth.controller");
@@ -22,5 +23,6 @@ router.post("/refresh", authLimiter, validate(refreshSchema), authController.ref
 router.post("/logout", authMiddleware, validate(logoutSchema), authController.logout);
 router.post("/logout-all", authMiddleware, authController.logoutAll);
 router.get("/profil", authMiddleware, authController.getProfil);
+router.put("/profil", authMiddleware, validate(updateProfilSchema), authController.updateProfil);
 
 module.exports = router;

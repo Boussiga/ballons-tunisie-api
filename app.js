@@ -7,6 +7,12 @@ const { globalLimiter } = require("./config/rateLimiter");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const cors = require("cors");
+
+app.use(cors({
+  origin: process.env.FRONTEND_URL
+}));
+
 
 // ─── Global Middlewares
 app.use(express.json());

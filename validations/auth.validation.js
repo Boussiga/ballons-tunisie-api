@@ -56,4 +56,22 @@ const logoutSchema = {
   }),
 };
 
-module.exports = { registerSchema, loginSchema, refreshSchema, logoutSchema };
+// ─── Update profile ───────────────────────────────────────────────────────────
+// Same rules as register, but motDePasse is optional:
+// if it is not sent, the current password stays unchanged.
+const updateProfilSchema = {
+  body: z.object({
+    nom: z.string().min(2, "Le nom doit contenir au moins 2 caractères.").max(100).trim(),
+    email: z.string().email("L'adresse email est invalide.").toLowerCase().trim(),
+    motDePasse: z
+      .string()
+      .min(8, "Le mot de passe doit contenir au moins 8 caractères.")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        "Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre."
+      )
+      .optional(),
+  }),
+};
+
+module.exports = { registerSchema, loginSchema, refreshSchema, logoutSchema, updateProfilSchema };

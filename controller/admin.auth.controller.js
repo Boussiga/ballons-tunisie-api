@@ -242,4 +242,34 @@ const getProfil = async (req, res) => {
   }
 };
 
-module.exports = { login, refreshToken, logout, logoutAll, register, getProfil };
+/**
+ * @desc  Modifier le profil de l'admin connecté (nom, email, mot de passe optionnel)
+ * @route PUT /api/auth/profil
+ * @access Private
+ */
+const updateProfil = async (req, res) => {
+  const { nom, email, motDePasse } = req.body;
+
+  try {
+    const existing = await prisma.administrateur.findUnique({ where: { email } });
+    if (existing && existing.id !== req.admin.id) {
+      return res.status(409).json({ message: "Cet email est déjà utilisé." });
+    }
+
+    const data = { nom, email };
+    if (motDePasse) data.motDePasse = await bcrypt.hash(motDePasse, 12);
+
+    const admin = await prisma.administrateur.update({
+      where: { id: req.admin.id },
+      data,
+      select: { id: true, nom: true, email: true },
+    });
+
+    res.status(200).json(admin);
+  } catch (error) {
+    console.error("Erreur updateProfil:", error);
+    res.status(500).json({ message: "Erreur serveur." });
+  }
+};
+
+module.exports = { login, refreshToken, logout, logoutAll, register, getProfil, updateProfil };

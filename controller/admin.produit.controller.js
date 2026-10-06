@@ -15,7 +15,7 @@ const getAllProduits = async (req, res) => {
 
     const where = {};
     if (categorieId) where.categorieId = parseInt(categorieId, 10);
-    if (stockFaible === true) where.stock = { gt: 0, lt: 5 };
+    if (stockFaible === true) where.stock = { lt: 5 };
     if (search) {
       where.OR = [
         { nom: { contains: search } },
@@ -131,6 +131,12 @@ const deleteProduit = async (req, res) => {
     if (!exists) {
       return res.status(404).json({ message: "Produit introuvable." });
     }
+    const nbLignes = await prisma.ligneCommande.count({ where: { produitId: id } });
+    if (nbLignes > 0) {
+      return res.status(409).json({
+        message: "Ce produit est lié à des commandes et ne peut pas être supprimé. Mettez son stock à 0 à la place.",
+    });
+  }
 
     await prisma.produit.delete({ where: { id } });
     res.status(200).json({ message: "Produit supprimé avec succès." });

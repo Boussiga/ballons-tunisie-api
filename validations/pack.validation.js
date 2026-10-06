@@ -14,6 +14,10 @@ const packProduitItem = z.object({
     .default(1),
 });
 
+// ─── No product twice in the same pack
+const noDuplicates = (items) =>
+  new Set(items.map((i) => i.produitId)).size === items.length;
+
 // ─── GET list: pagination ────────────────────────────────────────────────────
 const listPacksSchema = {
   query: z.object({
@@ -42,8 +46,9 @@ const createPackSchema = {
       .optional(),
     produits: z
       .array(packProduitItem, { required_error: "La liste de produits est requise." })
-      .min(1, "Un pack doit contenir au moins un produit.")
-      .max(20, "Un pack ne peut pas contenir plus de 20 produits."),
+      .min(2, "Un pack doit contenir au moins 2 produits.")
+      .max(20, "Un pack ne peut pas contenir plus de 20 produits.")
+      .refine(noDuplicates, "Un produit ne peut apparaître qu'une seule fois dans un pack."),
   }),
 };
 
@@ -59,8 +64,9 @@ const updatePackSchema = {
     description: z.string().max(1000).trim().optional(),
     produits: z
       .array(packProduitItem)
-      .min(1, "Un pack doit contenir au moins un produit.")
+      .min(2, "Un pack doit contenir au moins 2 produits.")
       .max(20)
+      .refine(noDuplicates, "Un produit ne peut apparaître qu'une seule fois dans un pack.")
       .optional(),
   }),
 };

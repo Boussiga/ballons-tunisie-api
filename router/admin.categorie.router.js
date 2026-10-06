@@ -10,8 +10,8 @@ const authenticateAdmin = require("../middelwhere/auth.middleware");
 
 router.get("/getAllCategories", authenticateAdmin, categorieController.getAllCategories);
 router.get("/getCategorieById/:id", authenticateAdmin, categorieController.getCategorieById);
-router.post("/createCategorie", validate(createCategorieSchema), authenticateAdmin, categorieController.createCategorie);
-router.put("/updateCategorie/:id", validate(updateCategorieSchema), authenticateAdmin, categorieController.updateCategorie);
+router.post("/createCategorie", authenticateAdmin, validate(createCategorieSchema), categorieController.createCategorie);
+router.put("/updateCategorie/:id", authenticateAdmin, validate(updateCategorieSchema), categorieController.updateCategorie);
 router.delete("/deleteCategorie/:id", authenticateAdmin, categorieController.deleteCategorie);
 
 module.exports = router;

@@ -4,6 +4,7 @@ const express = require("express");
 const path = require("path");
 const morgan = require("morgan");
 const { globalLimiter } = require("./config/rateLimiter");
+const fs = require("fs"); 
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,6 +25,7 @@ app.use(morgan("dev"));
 // Global rate limiter applied to all /api routes
 app.use("/api", globalLimiter);
 
+fs.mkdirSync(path.join(__dirname, "uploads"), { recursive: true });
 // Serve uploaded images
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 

@@ -4,9 +4,9 @@ const bcrypt = require("bcryptjs");
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Démarrage du seed...");
+  console.log("Starting seed...");
 
-  // Créer l'administrateur par défaut
+  // Create default admin
   const hashedPassword = await bcrypt.hash("Admin@2024", 12);
   const admin = await prisma.administrateur.upsert({
     where: { email: "admin@football-tunisie.tn" },
@@ -17,16 +17,36 @@ async function main() {
       motDePasse: hashedPassword,
     },
   });
-  console.log("Admin créé:", admin.email);
+  console.log("✅ Admin created:", admin.email);
 
-  // Créer des produits de base
-  const produits = await Promise.all([
+  // Create categories
+  const [catMaillots, catShorts, catAccessoires] = await Promise.all([
+    prisma.categorie.upsert({
+      where: { nom: "Maillots" },
+      update: {},
+      create: { nom: "Maillots", description: "Maillots de football officiels" },
+    }),
+    prisma.categorie.upsert({
+      where: { nom: "Shorts" },
+      update: {},
+      create: { nom: "Shorts", description: "Shorts de football" },
+    }),
+    prisma.categorie.upsert({
+      where: { nom: "Accessoires" },
+      update: {},
+      create: { nom: "Accessoires", description: "Chaussettes, gants, etc." },
+    }),
+  ]);
+  console.log("✅ 3 categories created.");
+
+  // Create products using categorieId (relation)
+  const [p1, p2, p3] = await Promise.all([
     prisma.produit.upsert({
       where: { id: 1 },
       update: {},
       create: {
         nom: "Maillot Équipe Nationale Tunisie 2024",
-        categorie: "Maillots",
+        categorieId: catMaillots.id,
         taille: "M",
         prix: 89.99,
         stock: 50,
@@ -38,7 +58,7 @@ async function main() {
       update: {},
       create: {
         nom: "Short Football Blanc",
-        categorie: "Shorts",
+        categorieId: catShorts.id,
         taille: "L",
         prix: 34.99,
         stock: 30,
@@ -50,7 +70,7 @@ async function main() {
       update: {},
       create: {
         nom: "Chaussettes Football Rouge",
-        categorie: "Accessoires",
+        categorieId: catAccessoires.id,
         taille: "Unique",
         prix: 12.99,
         stock: 100,
@@ -58,48 +78,54 @@ async function main() {
       },
     }),
   ]);
-  console.log(`✅ ${produits.length} produits créés.`);
+  console.log("✅ 3 products created.");
 
-  // Créer un pack
-  const pack = await prisma.pack.upsert({
-    where: { id: 1 },
-    update: {},
-    create: {
-      nom: "Pack Complet Tunisie 2024",
-      description: "Maillot + Short + Chaussettes",
-      prixPack: 129.99,
-      produits: {
-        create: [
-          { produitId: produits[0].id, quantite: 1 },
-          { produitId: produits[1].id, quantite: 1 },
-          { produitId: produits[2].id, quantite: 1 },
-        ],
+  // Create pack (UUID auto-generated — no fixed id)
+  const existingPack = await prisma.pack.findFirst({ where: { nom: "Pack Complet Tunisie 2024" } });
+  if (!existingPack) {
+    await prisma.pack.create({
+      data: {
+        nom: "Pack Complet Tunisie 2024",
+        description: "Maillot + Short + Chaussettes",
+        prixPack: 129.99,
+        produits: {
+          create: [
+            { produitId: p1.id, quantite: 1 },
+            { produitId: p2.id, quantite: 1 },
+            { produitId: p3.id, quantite: 1 },
+          ],
+        },
       },
-    },
-  });
-  console.log("✅ Pack créé:", pack.nom);
+    });
+    console.log("✅ Pack created.");
+  } else {
+    console.log("⏭️  Pack already exists, skipped.");
+  }
 
-  // Créer une offre
-  const offre = await prisma.offre.upsert({
-    where: { id: 1 },
-    update: {},
-    create: {
-      titre: "Soldes Automne 2024",
-      pourcentageReduction: 15,
-      dateDebut: new Date("2024-10-01"),
-      dateFin: new Date("2024-10-31"),
-    },
-  });
-  console.log("✅ Offre créée:", offre.titre);
+  // Create offer (UUID auto-generated — no fixed id)
+  const existingOffre = await prisma.offre.findFirst({ where: { titre: "Soldes Automne 2024" } });
+  if (!existingOffre) {
+    await prisma.offre.create({
+      data: {
+        titre: "Soldes Automne 2024",
+        pourcentageReduction: 15,
+        dateDebut: new Date("2024-10-01"),
+        dateFin: new Date("2024-10-31"),
+      },
+    });
+    console.log("✅ Offre created.");
+  } else {
+    console.log("⏭️  Offre already exists, skipped.");
+  }
 
-  console.log("\n🎉 Seed terminé avec succès!");
-  console.log("📧 Email admin:", admin.email);
-  console.log("🔑 Mot de passe admin: Admin@2024");
+  console.log("\n🎉 Seed completed successfully!");
+  console.log("📧 Admin email:", admin.email);
+  console.log("🔑 Admin password: Admin@2024");
 }
 
 main()
   .catch((e) => {
-    console.error("Erreur seed:", e);
+    console.error("Seed error:", e);
     process.exit(1);
   })
   .finally(async () => {

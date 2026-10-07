@@ -38,6 +38,12 @@ app.use("/api/admin/offres", require("./router/admin.offre.router"));
 app.use("/api/admin/commandes", require("./router/admin.commande.router"));
 app.use("/api/admin/dashboard", require("./router/admin.dashboard.router"));
 
+// ─── Store Routes (Public — no auth required) ─────────────────────────────────
+app.use("/api/store/produits",  require("./router/store.produit.router"));
+app.use("/api/store/packs",     require("./router/store.pack.router"));
+app.use("/api/store/offres",    require("./router/store.offre.router"));
+app.use("/api/store/commandes", require("./router/store.commande.router"));
+
 // ─── 404
 app.use((req, res) => {
   res.status(404).json({ message: "Route introuvable." });

@@ -7,22 +7,22 @@ const {
   loginSchema,
   refreshSchema,
   logoutSchema,
-  updateProfilSchema
+  updateProfilSchema,
+  updatePasswordSchema,
 } = require("../validations/auth.validation");
 const { authLimiter } = require("../config/rateLimiter");
 const authController = require("../controller/admin.auth.controller");
 
-// ─── Public routes ──────────────────────────────────────────────────────────
+// Public routes
 router.post("/register", validate(registerSchema), authController.register);
-
-// Strict rate limit on login and refresh (anti brute-force)
 router.post("/login", authLimiter, validate(loginSchema), authController.login);
 router.post("/refresh", authLimiter, validate(refreshSchema), authController.refreshToken);
 
-// ─── Protected routes ─────────────────────────────────────────────────────────
+// Protected routes
 router.post("/logout", authMiddleware, validate(logoutSchema), authController.logout);
 router.post("/logout-all", authMiddleware, authController.logoutAll);
 router.get("/profil", authMiddleware, authController.getProfil);
 router.put("/profil", authMiddleware, validate(updateProfilSchema), authController.updateProfil);
+router.patch("/profil/password", authMiddleware, validate(updatePasswordSchema), authController.updatePassword);
 
 module.exports = router;

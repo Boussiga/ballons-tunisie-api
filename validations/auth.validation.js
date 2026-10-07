@@ -74,4 +74,18 @@ const updateProfilSchema = {
   }),
 };
 
-module.exports = { registerSchema, loginSchema, refreshSchema, logoutSchema, updateProfilSchema };
+// ─── Update password ──────────────────────────────────────────────────────────
+const updatePasswordSchema = {
+  body: z.object({
+    ancienMotDePasse: z.string({ required_error: "L'ancien mot de passe est requis." }).min(1),
+    nouveauMotDePasse: z
+      .string({ required_error: "Le nouveau mot de passe est requis." })
+      .min(8, "Le mot de passe doit contenir au moins 8 caractères.")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        "Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre."
+      ),
+  }),
+};
+
+module.exports = { registerSchema, loginSchema, refreshSchema, logoutSchema, updateProfilSchema, updatePasswordSchema };

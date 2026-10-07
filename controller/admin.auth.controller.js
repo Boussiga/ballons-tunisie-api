@@ -272,4 +272,34 @@ const updateProfil = async (req, res) => {
   }
 };
 
-module.exports = { login, refreshToken, logout, logoutAll, register, getProfil, updateProfil };
+/**
+ * @desc  Change admin password — revokes all sessions after change
+ * @route PATCH /api/auth/profil/password
+ * @access Private
+ */
+const updatePassword = async (req, res) => {
+  const { ancienMotDePasse, nouveauMotDePasse } = req.body;
+  try {
+    const admin = await prisma.administrateur.findUnique({ where: { id: req.admin.id } });
+    if (!admin) return res.status(404).json({ message: "Administrateur introuvable." });
+
+    const isMatch = await bcrypt.compare(ancienMotDePasse, admin.motDePasse);
+    if (!isMatch) return res.status(401).json({ message: "Ancien mot de passe incorrect." });
+
+    const hashed = await bcrypt.hash(nouveauMotDePasse, 12);
+    await prisma.administrateur.update({ where: { id: admin.id }, data: { motDePasse: hashed } });
+
+    // Revoke all refresh tokens for security
+    await prisma.refreshToken.updateMany({
+      where: { adminId: admin.id, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+
+    res.status(200).json({ message: "Mot de passe mis à jour. Veuillez vous reconnecter." });
+  } catch (error) {
+    console.error("Erreur updatePassword:", error);
+    res.status(500).json({ message: "Erreur serveur." });
+  }
+};
+
+module.exports = { login, refreshToken, logout, logoutAll, register, getProfil, updateProfil, updatePassword };

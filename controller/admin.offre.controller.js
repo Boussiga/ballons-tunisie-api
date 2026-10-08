@@ -15,10 +15,14 @@ const getAllOffres = async (req, res) => {
 
     const where = {};
     if (search) where.titre = { contains: search };
-    if (active === true) {
+    // Express 5 keeps req.query read-only, so the validated boolean never
+    // replaces it: active arrives as the string "true" / "false".
+    const isActive = active === true || active === "true";
+    const isInactive = active === false || active === "false";
+    if (isActive) {
       where.dateDebut = { lte: now };
       where.dateFin = { gte: now };
-    } else if (active === false) {
+    } else if (isInactive) {
       where.OR = [{ dateFin: { lt: now } }, { dateDebut: { gt: now } }];
     }
 

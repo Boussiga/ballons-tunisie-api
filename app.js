@@ -10,9 +10,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const cors = require("cors");
 
-app.use(cors({
-  origin: process.env.FRONTEND_URL
-}));
+const allowedOrigins = (process.env.FRONTEND_URL || "").split(",").map((o) => o.trim());
+app.use(cors({ origin: allowedOrigins }));
 
 
 // ─── Global Middlewares

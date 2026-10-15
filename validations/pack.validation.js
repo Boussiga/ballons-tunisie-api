@@ -49,6 +49,11 @@ const createPackSchema = {
       .min(2, "Un pack doit contenir au moins 2 produits.")
       .max(20, "Un pack ne peut pas contenir plus de 20 produits.")
       .refine(noDuplicates, "Un produit ne peut apparaître qu'une seule fois dans un pack."),
+    pourcentageRemise: z
+      .number({ invalid_type_error: "La remise doit être un nombre." })
+      .min(0, "La remise ne peut pas être négative.")
+      .max(100, "La remise ne peut pas dépasser 100 %.")
+      .default(0),
   }),
 };
 
@@ -67,6 +72,11 @@ const updatePackSchema = {
       .min(2, "Un pack doit contenir au moins 2 produits.")
       .max(20)
       .refine(noDuplicates, "Un produit ne peut apparaître qu'une seule fois dans un pack.")
+      .optional(),
+    pourcentageRemise: z
+      .number({ invalid_type_error: "La remise doit être un nombre." })
+      .min(0, "La remise ne peut pas être négative.")
+      .max(100, "La remise ne peut pas dépasser 100 %.")
       .optional(),
   }),
 };

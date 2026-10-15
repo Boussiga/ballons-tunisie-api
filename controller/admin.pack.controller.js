@@ -1,5 +1,12 @@
 const prisma = require("../config/prisma");
 
+const calculerPrix = (lignes, produitsDB, pct = 0) => {
+  const somme = lignes.reduce(
+    (s, l) => s + produitsDB.find((p) => p.id === l.produitId).prix * l.quantite, 0
+  );
+  return Math.round(somme * (1 - pct / 100) * 100) / 100;
+};
+
 /**
  * @desc  Get all packs — with pagination
  * @route GET /api/admin/packs
@@ -80,7 +87,7 @@ const getPackById = async (req, res) => {
  * @access Private
  */
 const createPack = async (req, res) => {
-  const { nom, description, produits } = req.body;
+  const { nom, description, produits, pourcentageRemise = 0 } = req.body;
 
   try {
     const produitIds = produits.map((p) => p.produitId);
@@ -99,11 +106,7 @@ const createPack = async (req, res) => {
     }
 
     // Calculate pack price
-    let prixPack = 0;
-    produits.forEach((item) => {
-      const produit = produitsDB.find((p) => p.id === item.produitId);
-      prixPack += produit.prix * item.quantite;
-    });
+    const prixPack = calculerPrix(produits, produitsDB, pourcentageRemise);
 
     const pack = await prisma.pack.create({
       data: {
@@ -134,10 +137,10 @@ const createPack = async (req, res) => {
  */
 const updatePack = async (req, res) => {
   const { id } = req.params;
-  const { nom, description, produits } = req.body;
+  const { nom, description, produits, pourcentageRemise } = req.body;
 
   try {
-    const exists = await prisma.pack.findUnique({ where: { id } });
+    const exists = await prisma.pack.findUnique({ where: { id }, include: { produits: true } });
     if (!exists) {
       return res.status(404).json({ message: "Pack introuvable." });
     }
@@ -146,35 +149,29 @@ const updatePack = async (req, res) => {
     if (nom !== undefined) data.nom = nom;
     if (description !== undefined) data.description = description;
 
-    if (produits && produits.length > 0) {
-      const produitIds = produits.map((p) => p.produitId);
+    if (produits || pourcentageRemise !== undefined) {
+      const lignes = produits ?? exists.produits;
       const produitsDB = await prisma.produit.findMany({
-        where: { id: { in: produitIds } },
+        where: { id: { in: lignes.map((p) => p.produitId) } },
       });
 
-      const missingIds = produitIds.filter(
-        (pid) => !produitsDB.find((p) => p.id === pid)
-      );
+      const missingIds = lignes
+        .map((p) => p.produitId)
+        .filter((pid) => !produitsDB.find((p) => p.id === pid));
       if (missingIds.length > 0) {
         return res.status(404).json({
           message: `Produit(s) introuvable(s) : ID ${missingIds.join(", ")}`,
         });
       }
 
-      let prixPack = 0;
-      produits.forEach((item) => {
-        const produit = produitsDB.find((p) => p.id === item.produitId);
-        prixPack += produit.prix * item.quantite;
-      });
+      data.prixPack = calculerPrix(lignes, produitsDB, pourcentageRemise ?? 0);
 
-      data.prixPack = prixPack;
-      await prisma.packProduit.deleteMany({ where: { packId: id } });
-      data.produits = {
-        create: produits.map((p) => ({
-          produitId: p.produitId,
-          quantite: p.quantite,
-        })),
-      };
+      if (produits) {
+        await prisma.packProduit.deleteMany({ where: { packId: id } });
+        data.produits = {
+          create: produits.map((p) => ({ produitId: p.produitId, quantite: p.quantite })),
+        };
+      }
     }
 
     const pack = await prisma.pack.update({

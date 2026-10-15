@@ -7,6 +7,18 @@ const isoDateString = (label) =>
     .string({ required_error: `${label} est requise.` })
     .datetime({ message: `${label} doit être une date ISO 8601 valide (ex: 2024-10-01T00:00:00Z).` });
 
+// ─── Products targeted by an offer ───────────────────────────────────────────
+const produitIdsSchema = z
+  .array(
+    z
+      .number({ invalid_type_error: "Chaque produitId doit être un nombre." })
+      .int("Chaque produitId doit être un entier.")
+      .positive("Chaque produitId doit être positif."),
+    { required_error: "La liste des produits concernés est requise." }
+  )
+  .min(1, "Une offre doit concerner au moins un produit.")
+  .refine((ids) => new Set(ids).size === ids.length, "Un produit ne peut apparaître qu'une seule fois dans une offre.");
+
 // ─── GET list: pagination + active filter ─────────────────────────────────────
 const listOffresSchema = {
   query: z.object({
@@ -18,6 +30,7 @@ const listOffresSchema = {
       })
       .optional()
       .transform((v) => (v === undefined ? undefined : v === "true")),
+    produitId: z.coerce.number().int().positive("produitId doit être positif.").optional(),
     search: z
       .string()
       .max(100, "La recherche ne peut pas dépasser 100 caractères.")
@@ -44,6 +57,7 @@ const createOffreSchema = {
         .lte(100, "Le pourcentage ne peut pas dépasser 100."),
       dateDebut: isoDateString("La date de début"),
       dateFin: isoDateString("La date de fin"),
+      produitIds: produitIdsSchema,
     })
     .refine(
       (data) => new Date(data.dateDebut) < new Date(data.dateFin),
@@ -77,6 +91,7 @@ const updateOffreSchema = {
         .string()
         .datetime({ message: "dateFin doit être une date ISO 8601 valide." })
         .optional(),
+      produitIds: produitIdsSchema.optional(),
     })
     .refine(
       (data) => {

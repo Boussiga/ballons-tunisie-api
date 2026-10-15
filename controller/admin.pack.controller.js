@@ -82,7 +82,7 @@ const getPackById = async (req, res) => {
 };
 
 /**
- * @desc  Create a pack with automatic price calculation
+ * @desc  Create a pack — price = sum of products minus the admin discount (%)
  * @route POST /api/admin/packs
  * @access Private
  */
@@ -113,6 +113,7 @@ const createPack = async (req, res) => {
         nom,
         description: description || null,
         prixPack,
+        pourcentageRemise,
         produits: {
           create: produits.map((p) => ({
             produitId: p.produitId,
@@ -148,6 +149,7 @@ const updatePack = async (req, res) => {
     const data = {};
     if (nom !== undefined) data.nom = nom;
     if (description !== undefined) data.description = description;
+    if (pourcentageRemise !== undefined) data.pourcentageRemise = pourcentageRemise;
 
     if (produits || pourcentageRemise !== undefined) {
       const lignes = produits ?? exists.produits;
@@ -164,7 +166,8 @@ const updatePack = async (req, res) => {
         });
       }
 
-      data.prixPack = calculerPrix(lignes, produitsDB, pourcentageRemise ?? 0);
+      // Keep the stored discount when the admin only changes the products
+      data.prixPack = calculerPrix(lignes, produitsDB, pourcentageRemise ?? exists.pourcentageRemise);
 
       if (produits) {
         await prisma.packProduit.deleteMany({ where: { packId: id } });

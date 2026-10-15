@@ -15,6 +15,9 @@ const getOffresActives = async (req, res) => {
         dateFin:   { gte: now },
       },
       orderBy: { dateFin: "asc" }, // Soonest to expire first
+      include: {
+        produits: { select: { id: true, nom: true, prix: true, imageUrl: true, taille: true } },
+      },
     });
 
     const data = offres.map((o) => {

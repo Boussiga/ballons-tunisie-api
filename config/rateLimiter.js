@@ -10,17 +10,34 @@ const rateLimitHandler = (req, res, next, options) => {
   });
 };
 
+// Back-office routes (admin + its auth/profile calls) get their own, looser limit
+const isAdminRoute = (req) => /^\/api\/(admin|auth)(\/|$)/.test(req.originalUrl);
+
 /**
- * Global limiter: 100 requests per 15 minutes per IP
- * Applied to all API routes
+ * Global limiter: 15 requests per 40 seconds per IP
+ * Applied to all public API routes (the store) — admin routes use adminLimiter
  */
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
+  windowMs: 40 * 1000, // 40 seconds
+  max: 15,
   standardHeaders: true,
   legacyHeaders: false,
   handler: rateLimitHandler,
-  skip: (req) => req.method === "OPTIONS", // Ignore CORS pre-flight
+  skip: (req) => req.method === "OPTIONS" || isAdminRoute(req), // Ignore CORS pre-flight
+});
+
+/**
+ * Admin limiter: 120 requests per minute per IP
+ * The administrator manages everything (dashboard, catalogue, orders), so the
+ * back-office needs more room than the public store
+ */
+const adminLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: rateLimitHandler,
+  skip: (req) => req.method === "OPTIONS",
 });
 
 /**
@@ -58,4 +75,4 @@ const readLimiter = rateLimit({
   handler: rateLimitHandler,
 });
 
-module.exports = { globalLimiter, authLimiter, uploadLimiter, readLimiter };
+module.exports = { globalLimiter, adminLimiter, authLimiter, uploadLimiter, readLimiter };

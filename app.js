@@ -3,7 +3,7 @@ const http = require("http");
 const express = require("express");
 const path = require("path");
 const morgan = require("morgan");
-const { globalLimiter } = require("./config/rateLimiter");
+const { globalLimiter, adminLimiter } = require("./config/rateLimiter");
 const fs = require("fs"); 
 
 const app = express();
@@ -21,7 +21,8 @@ app.use(express.urlencoded({ extended: true }));
 // HTTP request logging (méthode, url, status, temps de réponse)
 app.use(morgan("dev"));
 
-// Global rate limiter applied to all /api routes
+// Rate limiting: back-office routes get a looser limit than the public store
+app.use(["/api/admin", "/api/auth"], adminLimiter);
 app.use("/api", globalLimiter);
 
 fs.mkdirSync(path.join(__dirname, "uploads"), { recursive: true });

@@ -1,5 +1,18 @@
 const prisma = require("../config/prisma");
 
+const produitsSelect = {
+  select: { id: true, nom: true, prix: true, imageUrl: true, taille: true },
+};
+
+// Returns the IDs from the list that do not match an existing product
+const produitsManquants = async (produitIds) => {
+  const existants = await prisma.produit.findMany({
+    where: { id: { in: produitIds } },
+    select: { id: true },
+  });
+  return produitIds.filter((id) => !existants.find((p) => p.id === id));
+};
+
 /**
  * @desc  Get all offers — with pagination
  * @route GET /api/admin/offres
@@ -7,7 +20,7 @@ const prisma = require("../config/prisma");
  */
 const getAllOffres = async (req, res) => {
   try {
-    let { search, active, page = 1, limit = 10 } = req.query;
+    let { search, active, produitId, page = 1, limit = 10 } = req.query;
     page = parseInt(page, 10) || 1;
     limit = parseInt(limit, 10) || 10;
     const skip = (page - 1) * limit;
@@ -15,6 +28,7 @@ const getAllOffres = async (req, res) => {
 
     const where = {};
     if (search) where.titre = { contains: search };
+    if (produitId) where.produits = { some: { id: parseInt(produitId, 10) } };
     // Express 5 keeps req.query read-only, so the validated boolean never
     // replaces it: active arrives as the string "true" / "false".
     const isActive = active === true || active === "true";
@@ -32,6 +46,7 @@ const getAllOffres = async (req, res) => {
         skip,
         take: limit,
         orderBy: { dateDebut: "desc" },
+        include: { produits: produitsSelect },
       }),
       prisma.offre.count({ where }),
     ]);
@@ -66,7 +81,10 @@ const getAllOffres = async (req, res) => {
 const getOffreById = async (req, res) => {
   const { id } = req.params;
   try {
-    const offre = await prisma.offre.findUnique({ where: { id } });
+    const offre = await prisma.offre.findUnique({
+      where: { id },
+      include: { produits: produitsSelect },
+    });
 
     if (!offre) {
       return res.status(404).json({ message: "Offre introuvable." });
@@ -89,15 +107,24 @@ const getOffreById = async (req, res) => {
  * @access Private
  */
 const createOffre = async (req, res) => {
-  const { titre, pourcentageReduction, dateDebut, dateFin } = req.body;
+  const { titre, pourcentageReduction, dateDebut, dateFin, produitIds } = req.body;
   try {
+    const missingIds = await produitsManquants(produitIds);
+    if (missingIds.length > 0) {
+      return res.status(404).json({
+        message: `Produit(s) introuvable(s) : ID ${missingIds.join(", ")}`,
+      });
+    }
+
     const offre = await prisma.offre.create({
       data: {
         titre,
         pourcentageReduction,
         dateDebut: new Date(dateDebut),
         dateFin: new Date(dateFin),
+        produits: { connect: produitIds.map((id) => ({ id })) },
       },
+      include: { produits: produitsSelect },
     });
     res.status(201).json({ message: "Offre créée avec succès.", offre });
   } catch (error) {
@@ -119,11 +146,33 @@ const updateOffre = async (req, res) => {
       return res.status(404).json({ message: "Offre introuvable." });
     }
 
-    const data = { ...req.body };
+    const { produitIds, ...data } = req.body;
     if (data.dateDebut) data.dateDebut = new Date(data.dateDebut);
     if (data.dateFin) data.dateFin = new Date(data.dateFin);
 
-    const offre = await prisma.offre.update({ where: { id }, data });
+    // Only one date sent: compare it with the stored one
+    if ((data.dateDebut ?? exists.dateDebut) >= (data.dateFin ?? exists.dateFin)) {
+      return res.status(400).json({
+        message: "La date de début doit être antérieure à la date de fin.",
+      });
+    }
+
+    if (produitIds) {
+      const missingIds = await produitsManquants(produitIds);
+      if (missingIds.length > 0) {
+        return res.status(404).json({
+          message: `Produit(s) introuvable(s) : ID ${missingIds.join(", ")}`,
+        });
+      }
+      // Replace the targeted products with the new selection
+      data.produits = { set: produitIds.map((pid) => ({ id: pid })) };
+    }
+
+    const offre = await prisma.offre.update({
+      where: { id },
+      data,
+      include: { produits: produitsSelect },
+    });
     res.status(200).json({ message: "Offre mise à jour.", offre });
   } catch (error) {
     console.error("Erreur updateOffre:", error);

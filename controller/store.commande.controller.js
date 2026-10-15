@@ -17,7 +17,10 @@ const passerCommande = async (req, res) => {
     const [produits, packs, offres] = await Promise.all([
       prisma.produit.findMany({ where: { id: { in: produitIds } } }),
       prisma.pack.findMany({ where: { id: { in: packIds } } }),
-      prisma.offre.findMany({ where: { id: { in: offreIds } } }),
+      prisma.offre.findMany({
+        where: { id: { in: offreIds } },
+        include: { produits: { select: { id: true } } },
+      }),
     ]);
 
     // Validate each line
@@ -38,6 +41,9 @@ const passerCommande = async (req, res) => {
         if (!o) { errors.push(`Offre ID ${ligne.offreId} introuvable.`); continue; }
         if (now < new Date(o.dateDebut) || now > new Date(o.dateFin))
           errors.push(`L'offre "${o.titre}" n'est plus active.`);
+        // An offer only discounts the products it targets
+        if (!ligne.produitId || !o.produits.some((p) => p.id === ligne.produitId))
+          errors.push(`L'offre "${o.titre}" ne s'applique pas à cet article.`);
       }
     }
     if (errors.length > 0) return res.status(400).json({ message: "Données invalides.", erreurs: errors });

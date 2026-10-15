@@ -62,6 +62,7 @@ model Produit {
   imageUrl    String?
 
   packs       PackProduit[]
+  offres      Offre[]  @relation("OffreProduits")
   lignes      LigneCommande[]
 
   createdAt   DateTime @default(now())
@@ -75,6 +76,7 @@ model Pack {
   nom         String
   description String?
   prixPack    Float
+  pourcentageRemise Float @default(0) // taux de réduction (%) défini par l'admin
 
   produits    PackProduit[]
   lignes      LigneCommande[]
@@ -104,6 +106,7 @@ model Offre {
   dateDebut           DateTime
   dateFin             DateTime
 
+  produits            Produit[] @relation("OffreProduits")
   lignes              LigneCommande[]
 
   createdAt           DateTime @default(now())

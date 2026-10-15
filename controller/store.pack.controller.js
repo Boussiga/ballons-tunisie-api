@@ -1,5 +1,13 @@
 const prisma = require("../config/prisma");
 
+// Adds the sum of the products' prices, so the store can show the original price
+const avecPrixAvantRemise = (pack) => ({
+  ...pack,
+  prixAvantRemise: Math.round(
+    pack.produits.reduce((s, l) => s + l.produit.prix * l.quantite, 0) * 100
+  ) / 100,
+});
+
 /**
  * @desc  Public packs list
  * @route GET /api/store/packs
@@ -33,7 +41,7 @@ const getAllPacksPublic = async (req, res) => {
     ]);
 
     res.status(200).json({
-      data: packs,
+      data: packs.map(avecPrixAvantRemise),
       pagination: {
         total, page, limit,
         totalPages: Math.ceil(total / limit),
@@ -67,7 +75,7 @@ const getPackPublic = async (req, res) => {
     });
 
     if (!pack) return res.status(404).json({ message: "Pack introuvable." });
-    res.status(200).json(pack);
+    res.status(200).json(avecPrixAvantRemise(pack));
   } catch (error) {
     console.error("Erreur getPackPublic:", error);
     res.status(500).json({ message: "Erreur serveur." });

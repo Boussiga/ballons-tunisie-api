@@ -164,18 +164,18 @@ All routes are prefixed with `/api/admin`.
 |--------|----------------------------------|-------------------------------|
 | GET    | `/getAllPacks?page=1&limit=10`   | List with pagination          |
 | GET    | `/getPackById/:id`               | Get one by ID                 |
-| POST   | `/createPack`                    | Create pack (auto price calc) |
-| PUT    | `/updatePack/:id`                | Update pack                   |
+| POST   | `/createPack`                    | Create pack (price = products - `pourcentageRemise` %) |
+| PUT    | `/updatePack/:id`                | Update pack (products and/or `pourcentageRemise`) |
 | DELETE | `/deletePack/:id`                | Delete pack                   |
 
 ###  Offers (`/offres`)
 
 | Method | Endpoint                         | Description          |
 |--------|----------------------------------|----------------------|
-| GET    | `/getAllOffres?page=1&limit=10`  | List with pagination |
+| GET    | `/getAllOffres?page=1&limit=10&produitId=` | List with pagination, filter by product |
 | GET    | `/getOffreById/:id`              | Get one by ID        |
-| POST   | `/createOffre`                   | Create offer         |
-| PUT    | `/updateOffre/:id`               | Update offer         |
+| POST   | `/createOffre`                   | Create offer for the selected products (`produitIds`) |
+| PUT    | `/updateOffre/:id`               | Update offer (`produitIds` replaces the selection) |
 | DELETE | `/deleteOffre/:id`               | Delete offer         |
 
 ###  Orders (`/commandes`)
@@ -194,6 +194,32 @@ All routes are prefixed with `/api/admin`.
 |--------|---------------------------------|------------------------------------------|
 | GET    | `/getDashboard`                 | Global stats (products, orders, revenue) |
 | GET    | `/getStatistiquesVentes/ventes` | Sales stats by period (week/month/year)  |
+| GET    | `/getStatistiquesDetaillees?dateDebut=&dateFin=&granularite=` | Detailed business statistics (see below) |
+
+#### Detailed statistics — `/getStatistiquesDetaillees`
+
+| Parameter     | Format                        | Default                                   |
+|---------------|-------------------------------|-------------------------------------------|
+| `dateDebut`   | `AAAA-MM-JJ`                  | 29 days before `dateFin`                  |
+| `dateFin`     | `AAAA-MM-JJ` (included)       | today                                     |
+| `granularite` | `jour` | `semaine` | `mois` | auto: ≤ 31 days → jour, ≤ 6 months → semaine, else mois |
+
+Revenue counts every order that is not `annulee`. Every figure is compared with the previous period of the same length.
+
+| Section              | Content |
+|----------------------|---------|
+| `resume`             | Revenue (total, delivered, in progress, lost to cancellations), orders, average basket, items sold, discounts granted, cancellation / delivery rates, unique customers |
+| `comparaison`        | Current vs. previous period with variation in % (`null` when the previous value is 0) |
+| `commandesParStatut` | Count and amount per status |
+| `evolution`          | Time series per day / week / month (empty periods included) for charts |
+| `produits`           | Top 10 by revenue and by quantity |
+| `categories`         | Revenue and share per category (packs grouped under "Packs") |
+| `packs` / `offres`   | Sales per pack, usage and discount cost per offer |
+| `clients`            | New / returning / loyal customers (identified by phone), top 10 customers |
+| `regions`            | Revenue per governorate, detected from the delivery address |
+| `habitudes`          | Orders per weekday and per hour |
+| `stock`              | Stock value, out of stock, low stock, products at risk of running out (< 14 days at current pace), unsold products and tied-up value |
+| `alertes`            | Points needing attention (orders pending > 48h, out of stock, revenue drop, high cancellation rate…) |
 
 ---
 
@@ -201,7 +227,8 @@ All routes are prefixed with `/api/admin`.
 
 | Limiter        | Applies to              | Limit                   |
 |----------------|-------------------------|-------------------------|
-| `globalLimiter`| All `/api` routes       | 100 req / 15 min per IP |
+| `globalLimiter`| Public `/api` routes (store) | 15 req / 40 s per IP |
+| `adminLimiter` | `/api/admin`, `/api/auth` | 120 req / 1 min per IP |
 | `authLimiter`  | `/login`, `/refresh`    | 10 req / 15 min per IP  |
 | `uploadLimiter`| POST/PUT with files     | 20 req / 15 min per IP  |
 | `readLimiter`  | GET list endpoints      | 60 req / 1 min per IP   |

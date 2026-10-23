@@ -113,6 +113,31 @@ npm run dev
 npm start
 ```
 
+### 7. Tests
+
+```bash
+npm test               # Jest unit tests, Prisma mocked (no database needed)
+npm run test:coverage
+```
+
+---
+
+##  Docker
+
+`docker-compose.yml` starts MySQL, the API and the store (built from
+`../ballons-tunisie-frontoffice`, which must be next to this folder).
+
+```bash
+docker compose up --build                  # start everything
+docker compose exec api npm run db:seed    # optional, in another terminal: demo data + admin
+docker compose down                        # stop
+```
+
+- Store: http://localhost:8080 — API (for the admin back-office): http://localhost:3000
+- The tables are created automatically when the API starts (`prisma db push`).
+- Database and product images are kept in Docker volumes (`db-data`, `uploads`).
+- The passwords and `JWT_SECRET` in `docker-compose.yml` are for local development only.
+
 ---
 
 ##  Authentication

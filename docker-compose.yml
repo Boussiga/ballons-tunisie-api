@@ -1,0 +1,42 @@
+# Start everything:   docker compose up --build
+# Store:              http://localhost:8080
+# API (back-office):  http://localhost:3000
+#
+# These values are for local development. Change the passwords and JWT_SECRET
+# before using it on a real server.
+
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: foot
+    volumes:
+      - db-data:/var/lib/mysql
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: mysql://root:root@db:3306/foot
+      JWT_SECRET: change-me
+      FRONTEND_URL: http://localhost:5173
+      TRUST_PROXY: 1
+    ports:
+      - "3000:3000"
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      - db
+    # MySQL needs a few seconds on the first start: the API restarts until it is ready
+    restart: on-failure
+
+  front:
+    build: ../ballons-tunisie-frontoffice
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  db-data:
+  uploads:

@@ -10,6 +10,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const cors = require("cors");
 
+// Behind nginx (Docker), use the client's IP for rate limiting, not nginx's
+if (process.env.TRUST_PROXY) app.set("trust proxy", 1);
+
 const allowedOrigins = (process.env.FRONTEND_URL || "").split(",").map((o) => o.trim());
 app.use(cors({ origin: allowedOrigins }));
 

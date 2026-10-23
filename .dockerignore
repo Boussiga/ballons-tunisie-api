@@ -1,0 +1,7 @@
+node_modules
+coverage
+tests
+uploads
+.git
+.env
+prisma/dev.db

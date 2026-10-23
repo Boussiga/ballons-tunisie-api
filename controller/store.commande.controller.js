@@ -1,5 +1,6 @@
 const prisma = require("../config/prisma");
 const { offreValideWhere, appliquerReduction } = require("../utils/offre");
+const { FRAIS_LIVRAISON, totalAvecLivraison } = require("../utils/commande");
 
 /**
  * @desc  Place an order as a guest — validates stock, applies offers, atomic transaction
@@ -67,13 +68,14 @@ const passerCommande = async (req, res) => {
         ...(offre           && { offreId: offre.id }),
       };
     });
-    total = parseFloat(total.toFixed(2));
+    total = totalAvecLivraison(total);
 
     // Atomic transaction: create order + decrement stock
     const commande = await prisma.$transaction(async (tx) => {
       const newCommande = await tx.commande.create({
         data: {
           nomClient, telephoneClient, adresseLivraison, total,
+          fraisLivraison: FRAIS_LIVRAISON,
           lignes: { create: lignesData },
         },
         include: { lignes: { include: { produit: true, pack: true, offre: true } } },
@@ -130,6 +132,7 @@ const suiviCommande = async (req, res) => {
       id: commande.id,
       statut: commande.statut,
       dateCommande: commande.dateCommande,
+      fraisLivraison: commande.fraisLivraison,
       total: commande.total,
       nomClient: commande.nomClient,
       lignes: commande.lignes,

@@ -122,7 +122,8 @@ model Commande {
   adresseLivraison String
   dateCommande     DateTime @default(now())
   statut           String   @default("en_attente") // en_attente, confirmee, livree, annulee
-  total            Float    @default(0)
+  fraisLivraison   Float    @default(0) // set by the code on new orders; 0 keeps older orders unchanged
+  total            Float    @default(0) // items after offers + fraisLivraison
 
   lignes           LigneCommande[]
 

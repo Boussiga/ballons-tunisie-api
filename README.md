@@ -188,6 +188,9 @@ All routes are prefixed with `/api/admin`.
 | PATCH  | `/updateStatutCommande/:id/statut`     | Update order status     |
 | PATCH  | `/annulerCommande/:id/annuler`         | Cancel an order         |
 
+Every new order (store or admin) carries a flat **10 TND delivery fee** (`fraisLivraison`, set in `utils/commande.js`).
+`total` is what the client pays: items after offers + `fraisLivraison`. Orders placed before the fee existed keep `fraisLivraison = 0`.
+
 ###  Dashboard (`/dashboard`)
 
 | Method | Endpoint                        | Description                              |

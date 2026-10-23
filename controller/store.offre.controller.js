@@ -1,4 +1,5 @@
 const prisma = require("../config/prisma");
+const { offreValideWhere, appliquerReduction } = require("../utils/offre");
 
 /**
  * @desc  Get currently active offers only
@@ -10,10 +11,7 @@ const getOffresActives = async (req, res) => {
     const now = new Date();
 
     const offres = await prisma.offre.findMany({
-      where: {
-        dateDebut: { lte: now },
-        dateFin:   { gte: now },
-      },
+      where: offreValideWhere(now),
       orderBy: { dateFin: "asc" }, // Soonest to expire first
       include: {
         produits: { select: { id: true, nom: true, prix: true, imageUrl: true, taille: true } },
@@ -23,7 +21,11 @@ const getOffresActives = async (req, res) => {
     const data = offres.map((o) => {
       const msLeft = new Date(o.dateFin) - now;
       const joursRestants = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
-      return { ...o, joursRestants };
+      const produits = o.produits.map((p) => ({
+        ...p,
+        prixFinal: appliquerReduction(p.prix, o.pourcentageReduction),
+      }));
+      return { ...o, produits, joursRestants };
     });
 
     res.status(200).json({ data });

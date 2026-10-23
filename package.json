@@ -8,7 +8,9 @@
     "dev": "nodemon app.js",
     "db:migrate": "npx prisma migrate dev --name init",
     "db:seed": "node prisma/seed.js",
-    "db:studio": "npx prisma studio"
+    "db:studio": "npx prisma studio",
+    "test": "jest",
+    "test:coverage": "jest --coverage"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -31,5 +33,21 @@
     "uuid": "^14.0.2",
     "winston": "^3.19.0",
     "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "roots": [
+      "<rootDir>/tests"
+    ],
+    "clearMocks": true,
+    "collectCoverageFrom": [
+      "controller/**/*.js",
+      "middelwhere/**/*.js",
+      "utils/**/*.js",
+      "validations/**/*.js"
+    ]
   }
 }

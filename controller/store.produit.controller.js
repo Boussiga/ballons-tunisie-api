@@ -1,4 +1,5 @@
 const prisma = require("../config/prisma");
+const { offresValidesSelect, avecOffreActive } = require("../utils/offre");
 
 /**
  * @desc  Public product catalog — only in-stock items, hides exact stock count
@@ -26,6 +27,7 @@ const getAllProduitsPublic = async (req, res) => {
         select: {
           id: true, nom: true, prix: true, taille: true, description: true, imageUrl: true, stock: true,
           categorie: { select: { id: true, nom: true } },
+          offres: offresValidesSelect(),
         },
       }),
       prisma.produit.count({ where }),
@@ -33,7 +35,7 @@ const getAllProduitsPublic = async (req, res) => {
 
     // Replace raw stock with availability label
     const data = produits.map(({ stock, ...p }) => ({
-      ...p,
+      ...avecOffreActive(p),
       disponibilite: stock === 0 ? "rupture" : stock < 5 ? "stock_faible" : "disponible",
     }));
 
@@ -67,6 +69,7 @@ const getProduitPublic = async (req, res) => {
       select: {
         id: true, nom: true, prix: true, taille: true, description: true, imageUrl: true, stock: true,
         categorie: { select: { id: true, nom: true } },
+        offres: offresValidesSelect(),
       },
     });
 
@@ -74,7 +77,7 @@ const getProduitPublic = async (req, res) => {
 
     const { stock, ...rest } = produit;
     res.status(200).json({
-      ...rest,
+      ...avecOffreActive(rest),
       disponibilite: stock === 0 ? "rupture" : stock < 5 ? "stock_faible" : "disponible",
     });
   } catch (error) {

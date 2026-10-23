@@ -1,4 +1,5 @@
 const prisma = require("../config/prisma");
+const { FRAIS_LIVRAISON, totalAvecLivraison } = require("../utils/commande");
 
 /**
  * @desc  Get all orders — pagination + filters
@@ -146,7 +147,7 @@ const createCommande = async (req, res) => {
       };
     });
 
-    total = parseFloat(total.toFixed(2));
+    total = totalAvecLivraison(total);
 
     // Atomic transaction: create order + decrement stock
     const commande = await prisma.$transaction(async (tx) => {
@@ -156,6 +157,7 @@ const createCommande = async (req, res) => {
           telephoneClient,
           adresseLivraison,
           total,
+          fraisLivraison: FRAIS_LIVRAISON,
           lignes: { create: lignesData },
         },
         include: { lignes: { include: { produit: true, pack: true, offre: true } } },
@@ -242,7 +244,8 @@ const calculerTotal = async (req, res) => {
       if (ligne.offre) prix *= 1 - ligne.offre.pourcentageReduction / 100;
       total += prix * ligne.quantite;
     });
-    total = parseFloat(total.toFixed(2));
+    // Uses the fee stored on the order (0 for orders placed before delivery fees)
+    total = totalAvecLivraison(total, commande.fraisLivraison);
 
     await prisma.commande.update({ where: { id }, data: { total } });
     res.status(200).json({ commandeId: id, total });

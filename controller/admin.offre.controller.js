@@ -1,4 +1,5 @@
 const prisma = require("../config/prisma");
+const { estOffreValide } = require("../utils/offre");
 
 const produitsSelect = {
   select: { id: true, nom: true, prix: true, imageUrl: true, taille: true },
@@ -53,7 +54,7 @@ const getAllOffres = async (req, res) => {
 
     const offresAvecStatut = offres.map((o) => ({
       ...o,
-      estValide: now >= new Date(o.dateDebut) && now <= new Date(o.dateFin),
+      estValide: estOffreValide(o, now),
     }));
 
     res.status(200).json({
@@ -93,7 +94,7 @@ const getOffreById = async (req, res) => {
     const now = new Date();
     res.status(200).json({
       ...offre,
-      estValide: now >= new Date(offre.dateDebut) && now <= new Date(offre.dateFin),
+      estValide: estOffreValide(offre, now),
     });
   } catch (error) {
     console.error("Erreur getOffreById:", error);

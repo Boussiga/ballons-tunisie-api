@@ -1,4 +1,6 @@
 const prisma = require("../config/prisma");
+const { offreValideWhere, appliquerReduction } = require("../utils/offre");
+const { FRAIS_LIVRAISON, totalAvecLivraison } = require("../utils/commande");
 
 /**
  * @desc  Place an order as a guest — validates stock, applies offers, atomic transaction
@@ -17,8 +19,9 @@ const passerCommande = async (req, res) => {
     const [produits, packs, offres] = await Promise.all([
       prisma.produit.findMany({ where: { id: { in: produitIds } } }),
       prisma.pack.findMany({ where: { id: { in: packIds } } }),
+      // Expired offers are left out: those lines go back to the initial price
       prisma.offre.findMany({
-        where: { id: { in: offreIds } },
+        where: { id: { in: offreIds }, ...offreValideWhere(now) },
         include: { produits: { select: { id: true } } },
       }),
     ]);
@@ -38,9 +41,7 @@ const passerCommande = async (req, res) => {
       }
       if (ligne.offreId) {
         const o = offres.find((x) => x.id === ligne.offreId);
-        if (!o) { errors.push(`Offre ID ${ligne.offreId} introuvable.`); continue; }
-        if (now < new Date(o.dateDebut) || now > new Date(o.dateFin))
-          errors.push(`L'offre "${o.titre}" n'est plus active.`);
+        if (!o) continue; // Expired or removed: ignored, not an error
         // An offer only discounts the products it targets
         if (!ligne.produitId || !o.produits.some((p) => p.id === ligne.produitId))
           errors.push(`L'offre "${o.titre}" ne s'applique pas à cet article.`);
@@ -55,11 +56,8 @@ const passerCommande = async (req, res) => {
       if (ligne.produitId) prixInitiale = produits.find((p) => p.id === ligne.produitId).prix;
       if (ligne.packId)    prixInitiale = packs.find((p) => p.id === ligne.packId).prixPack;
 
-      let prixFinal = prixInitiale;
-      if (ligne.offreId) {
-        const o = offres.find((o) => o.id === ligne.offreId);
-        prixFinal = prixInitiale * (1 - o.pourcentageReduction / 100);
-      }
+      const offre = ligne.offreId && offres.find((o) => o.id === ligne.offreId);
+      const prixFinal = offre ? appliquerReduction(prixInitiale, offre.pourcentageReduction) : prixInitiale;
       total += prixFinal * ligne.quantite;
 
       return {
@@ -67,16 +65,17 @@ const passerCommande = async (req, res) => {
         prixInitiale,
         ...(ligne.produitId && { produitId: ligne.produitId }),
         ...(ligne.packId    && { packId: ligne.packId }),
-        ...(ligne.offreId   && { offreId: ligne.offreId }),
+        ...(offre           && { offreId: offre.id }),
       };
     });
-    total = parseFloat(total.toFixed(2));
+    total = totalAvecLivraison(total);
 
     // Atomic transaction: create order + decrement stock
     const commande = await prisma.$transaction(async (tx) => {
       const newCommande = await tx.commande.create({
         data: {
           nomClient, telephoneClient, adresseLivraison, total,
+          fraisLivraison: FRAIS_LIVRAISON,
           lignes: { create: lignesData },
         },
         include: { lignes: { include: { produit: true, pack: true, offre: true } } },
@@ -133,6 +132,7 @@ const suiviCommande = async (req, res) => {
       id: commande.id,
       statut: commande.statut,
       dateCommande: commande.dateCommande,
+      fraisLivraison: commande.fraisLivraison,
       total: commande.total,
       nomClient: commande.nomClient,
       lignes: commande.lignes,

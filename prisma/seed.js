@@ -1,5 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcryptjs");
+const { FRAIS_LIVRAISON, totalAvecLivraison } = require("../utils/commande");
 
 const prisma = new PrismaClient();
 
@@ -248,7 +249,8 @@ async function main() {
           adresseLivraison,
           dateCommande,
           statut,
-          total: parseFloat(total.toFixed(2)),
+          fraisLivraison: FRAIS_LIVRAISON,
+          total: totalAvecLivraison(total),
           lignes: { create: lignes.map(({ reduction, ...l }) => ({ ...l, createdAt: dateCommande })) },
           createdAt: dateCommande,
         },

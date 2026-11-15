@@ -1,5 +1,9 @@
 const prisma = require("../config/prisma");
 const { offresValidesSelect, avecOffreActive } = require("../utils/offre");
+const { imagesSelect } = require("../utils/produitImages");
+
+// Gallery for the product page: urls only, main image first
+const galerieSelect = { orderBy: imagesSelect.orderBy, select: { id: true, url: true } };
 
 /**
  * @desc  Public product catalog: only in-stock items, hides exact stock count
@@ -70,12 +74,15 @@ const getProduitPublic = async (req, res) => {
         id: true, nom: true, prix: true, taille: true, description: true, imageUrl: true, stock: true,
         categorie: { select: { id: true, nom: true } },
         offres: offresValidesSelect(),
+        images: galerieSelect,
       },
     });
 
     if (!produit) return res.status(404).json({ message: "Produit introuvable." });
 
     const { stock, ...rest } = produit;
+    // Product saved before the gallery existed: its single image becomes the gallery
+    if (!rest.images || rest.images.length === 0) rest.images = rest.imageUrl ? [{ id: null, url: rest.imageUrl }] : [];
     res.status(200).json({
       ...avecOffreActive(rest),
       disponibilite: stock === 0 ? "rupture" : stock < 5 ? "stock_faible" : "disponible",

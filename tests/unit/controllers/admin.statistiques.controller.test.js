@@ -55,7 +55,7 @@ beforeEach(() => {
 
 afterEach(() => jest.useRealTimers());
 
-describe("getStatistiquesDetaillees — validation & period", () => {
+describe("getStatistiquesDetaillees, validation & period", () => {
   it("returns 422 for an invalid query without touching the database", async () => {
     const { res, body } = await appeler({ dateDebut: "2026-02-01", dateFin: "2026-01-01" });
 
@@ -98,7 +98,7 @@ describe("getStatistiquesDetaillees — validation & period", () => {
     const { body } = await appeler({ dateDebut: "2026-01-01", dateFin: "2026-03-31" });
 
     expect(body.periode.granularite).toBe("semaine");
-    // 2026-01-01 is a Thursday → first bucket is Monday 2025-12-29
+    // 2026-01-01 is a Thursday -> first bucket is Monday 2025-12-29
     expect(body.evolution[0].periode).toBe("2025-12-29");
     expect(body.evolution).toHaveLength(14);
     expect(body.evolution.at(-1).periode).toBe("2026-03-30");
@@ -128,7 +128,7 @@ describe("getStatistiquesDetaillees — validation & period", () => {
   });
 });
 
-describe("getStatistiquesDetaillees — empty period", () => {
+describe("getStatistiquesDetaillees, empty period", () => {
   it("returns zeros everywhere and skips the customers query", async () => {
     setData({});
 
@@ -159,7 +159,7 @@ describe("getStatistiquesDetaillees — empty period", () => {
   });
 });
 
-describe("getStatistiquesDetaillees — full period (June 2026)", () => {
+describe("getStatistiquesDetaillees, full period (June 2026)", () => {
   // 2026-06-15 is a Monday
   const c1 = commande({
     date: new Date(2026, 5, 15, 10), statut: "livree", total: 100, tel: "A", nom: "Ali", adresse: "Rue X, Sfax",
@@ -342,7 +342,7 @@ describe("getStatistiquesDetaillees — full period (June 2026)", () => {
         { id: 1, nom: "Ballon Pro", stock: 1 },
         { id: 4, nom: "Ballon Plage", stock: 3 },
       ],
-      // 3 sold over 30 days → 0.1 / day → 1 in stock lasts 10 days
+      // 3 sold over 30 days -> 0.1 / day -> 1 in stock lasts 10 days
       risqueRupture: [{ id: 1, nom: "Ballon Pro", stock: 1, ventesParJour: 0.1, joursRestants: 10 }],
       sansVente: {
         nombre: 1,
@@ -363,7 +363,7 @@ describe("getStatistiquesDetaillees — full period (June 2026)", () => {
   });
 });
 
-describe("getStatistiquesDetaillees — specific rules", () => {
+describe("getStatistiquesDetaillees, specific rules", () => {
   const periode = { dateDebut: "2026-06-01", dateFin: "2026-06-30" };
   const jour = new Date(2026, 5, 10, 12);
 

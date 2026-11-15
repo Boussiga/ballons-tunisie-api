@@ -3,7 +3,7 @@ const { z } = require("zod");
 const GRANULARITES = ["jour", "semaine", "mois"];
 const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
-// ─── GET detailed statistics: period + chart granularity ─────────────────────
+// GET detailed statistics: period + chart granularity
 const statistiquesQuery = z
   .object({
     dateDebut: z.string().regex(DATE_REGEX, "dateDebut doit être au format AAAA-MM-JJ.").optional(),

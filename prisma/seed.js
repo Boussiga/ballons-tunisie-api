@@ -12,7 +12,7 @@ const crypto = require("crypto");
 const { FRAIS_LIVRAISON, totalAvecLivraison } = require("../utils/commande");
 const { cloudinary, FOLDER, isConfigured } = require("../config/cloudinary");
 const { deleteImage } = require("../middelwhere/upload.middleware");
-const { genererSvg } = require("./demo-visuels");
+const { genererSvg, NB_VUES } = require("./demo-visuels");
 
 const prisma = new PrismaClient();
 
@@ -166,10 +166,12 @@ const prixPack = (lignes, pourcentageRemise) =>
 // Cloudinary too, so repeated demos do not pile up orphan files.
 async function viderBase() {
   if (isConfigured()) {
-    const anciens = await prisma.produit.findMany({ where: { imageUrl: { not: null } }, select: { imageUrl: true } });
-    for (const { imageUrl } of anciens) await deleteImage(imageUrl);
+    const produits = await prisma.produit.findMany({ select: { imageUrl: true, images: { select: { url: true } } } });
+    const urls = new Set(produits.flatMap((p) => [p.imageUrl, ...p.images.map((i) => i.url)]).filter(Boolean));
+    await Promise.all([...urls].map(deleteImage));
   }
   // Children first (foreign keys); the offer <-> product links go with the offers
+  await prisma.produitImage.deleteMany();
   await prisma.ligneCommande.deleteMany();
   await prisma.commande.deleteMany();
   await prisma.packProduit.deleteMany();
@@ -181,9 +183,9 @@ async function viderBase() {
   await prisma.administrateur.deleteMany();
 }
 
-// Uploads the product illustration, converted to PNG by Cloudinary
-async function envoyerImage(produit) {
-  const svg = genererSvg(produit.visuel, produit.taille);
+// Uploads one view of the product illustration, converted to PNG by Cloudinary
+async function envoyerImage(produit, vue) {
+  const svg = genererSvg(produit.visuel, vue);
   const dataUri = `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
   const r = await cloudinary.uploader.upload(dataUri, { folder: FOLDER, resource_type: "image", format: "png" });
   return r.secure_url;
@@ -208,22 +210,26 @@ async function main() {
   for (const c of CATEGORIES) categories[c.nom] = await prisma.categorie.create({ data: c });
   console.log(`${CATEGORIES.length} categories created.`);
 
-  // Products, with their image when Cloudinary is configured
+  // Products, with a gallery of 3 images each (NB_VUES) when Cloudinary is configured
   const avecImages = isConfigured();
   if (!avecImages) console.log("CLOUDINARY_* missing in .env: products are created without images.");
   const produits = {};
   for (const p of PRODUITS) {
-    const imageUrl = avecImages ? await envoyerImage(p) : null;
+    const urls = avecImages
+      ? await Promise.all(Array.from({ length: NB_VUES }, (_, vue) => envoyerImage(p, vue)))
+      : [];
     produits[p.nom] = await prisma.produit.create({
       data: {
         nom: p.nom, taille: p.taille, prix: p.prix, stock: p.stock, description: p.description,
-        imageUrl, categorieId: categories[p.categorie].id,
+        categorieId: categories[p.categorie].id,
+        imageUrl: urls[0] || null,
+        images: { create: urls.map((url, ordre) => ({ url, ordre })) },
       },
     });
     if (avecImages) process.stdout.write(".");
   }
   if (avecImages) process.stdout.write("\n");
-  console.log(`${PRODUITS.length} products created${avecImages ? " with their images" : ""}.`);
+  console.log(`${PRODUITS.length} products created${avecImages ? ` with ${NB_VUES} images each` : ""}.`);
 
   const packs = [];
   for (const { nom, description, remise, lignes } of PACKS) {

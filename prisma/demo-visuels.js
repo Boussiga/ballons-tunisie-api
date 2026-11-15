@@ -91,15 +91,21 @@ function motifHand({ fond, bande, couture }) {
 
 const MOTIFS = { football: motifFootball, basket: motifBasket, volley: motifVolley, hand: motifHand };
 
+// Views of the same ball, for the product gallery
+const VUES = {
+  face: { motif: "", balle: "" },
+  rotation: { motif: `rotate(40 ${CX} ${CY})`, balle: "" },
+  // Close-up: bigger ball, partly out of frame
+  zoom: { motif: "", balle: `translate(${CX} ${CY + 40}) scale(1.45) translate(${-CX} ${-CY})` },
+};
+const NB_VUES = Object.keys(VUES).length;
+
 // v = { motif, decor: [dark, light], ...motif colours }, see the products in seed.js
-function genererSvg(v, taille) {
+// vue = index in VUES (0 = main picture). No text on the picture: the store already shows
+// the size and puts its own badges (offer, stock) in the top corners.
+function genererSvg(v, vue = 0) {
   const [sombre, clair] = v.decor;
-  const badge = taille
-    ? `<g transform="translate(${W - 150},50)">
-        <rect width="110" height="56" rx="28" fill="#ffffff" fill-opacity="0.92"/>
-        <text x="55" y="37" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" fill="${sombre}">T${taille}</text>
-      </g>`
-    : "";
+  const { motif, balle } = Object.values(VUES)[vue];
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${W}" viewBox="0 0 ${W} ${W}">
   <defs>
     <linearGradient id="decor" x1="0" y1="0" x2="1" y2="1">
@@ -120,13 +126,14 @@ function genererSvg(v, taille) {
   <rect width="${W}" height="${W}" fill="url(#decor)"/>
   <circle cx="120" cy="680" r="220" fill="#ffffff" opacity="0.06"/>
   <circle cx="700" cy="120" r="160" fill="#ffffff" opacity="0.08"/>
-  <ellipse cx="${CX}" cy="${CY + R + 45}" rx="${R * 0.85}" ry="34" fill="url(#ombre)"/>
-  ${MOTIFS[v.motif](v)}
-  <circle cx="${CX}" cy="${CY}" r="${R}" fill="url(#volume)"/>
-  <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="#000000" stroke-opacity="0.25" stroke-width="3"/>
-  ${badge}
+  <g transform="${balle}">
+    <ellipse cx="${CX}" cy="${CY + R + 45}" rx="${R * 0.85}" ry="34" fill="url(#ombre)"/>
+    <g transform="${motif}">${MOTIFS[v.motif](v)}</g>
+    <circle cx="${CX}" cy="${CY}" r="${R}" fill="url(#volume)"/>
+    <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="#000000" stroke-opacity="0.25" stroke-width="3"/>
+  </g>
 </svg>
 `;
 }
 
-module.exports = { genererSvg };
+module.exports = { genererSvg, NB_VUES };

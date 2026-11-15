@@ -76,7 +76,7 @@ describe("store: a 10 % offer lowers the price of the selected products by 10 %"
   // Prisma returns, for each product, only the valid offers linked to it
   const avecOffres = (p) => ({ ...p, offres: SELECTION.includes(p.id) ? [OFFRE_10] : [] });
 
-  it("catalogue: prixFinal = prix × 0.9 for selected products, unchanged for the others", async () => {
+  it("catalogue: prixFinal = prix * 0.9 for selected products, unchanged for the others", async () => {
     prisma.produit.findMany.mockResolvedValue([BALLON_A, BALLON_B, BALLON_C].map(avecOffres));
     prisma.produit.count.mockResolvedValue(3);
     const res = mockResponse();
@@ -133,7 +133,7 @@ describe("order: the 10 % is charged only on the selected products", () => {
         body: {
           ...client,
           lignes: [
-            { produitId: 1, offreId: OFFRE_ID, quantite: 2 }, // 2 × 45
+            { produitId: 1, offreId: OFFRE_ID, quantite: 2 }, // 2 * 45
             { produitId: 3, quantite: 1 }, // 40, not selected
           ],
         },

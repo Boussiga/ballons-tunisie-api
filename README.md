@@ -265,7 +265,7 @@ Revenue counts every order that is not `annulee`. Every figure is compared with 
 
 | Limiter        | Applies to              | Limit                   |
 |----------------|-------------------------|-------------------------|
-| `globalLimiter`| Public `/api` routes (store) | 15 req / 40 s per IP |
+| `globalLimiter`| Public `/api` routes (store) | 40 req / 30 s per IP |
 | `adminLimiter` | `/api/admin`, `/api/auth` | 120 req / 1 min per IP |
 | `authLimiter`  | `/login`, `/refresh`    | 10 req / 15 min per IP  |
 | `uploadLimiter`| POST/PUT with files     | 20 req / 15 min per IP  |

@@ -17,7 +17,8 @@ const PORT = process.env.PORT || 3000;
 const cors = require("cors");
 
 // Behind nginx (Docker), use the client's IP for rate limiting, not nginx's
-if (process.env.TRUST_PROXY) app.set("trust proxy", 1);
+// TRUST_PROXY = number of proxies in front of the API (1 = nginx, 2 = HTTPS proxy + nginx)
+if (process.env.TRUST_PROXY) app.set("trust proxy", Number(process.env.TRUST_PROXY) || 1);
 
 const allowedOrigins = (process.env.FRONTEND_URL || "").split(",").map((o) => o.trim());
 app.use(cors({ origin: allowedOrigins }));

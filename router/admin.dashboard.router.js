@@ -9,7 +9,7 @@ const statistiquesController = require("../controller/admin.statistiques.control
 router.get("/getDashboard", authMiddleware, dashboardController.getDashboard);
 router.get("/getStatistiquesVentes/ventes", authMiddleware, dashboardController.getStatistiquesVentes);
 
-// Detailed statistics — period + granularity are validated in the controller (Express 5 req.query is read-only)
+// Detailed statistics: period + granularity are validated in the controller (Express 5 req.query is read-only)
 router.get("/getStatistiquesDetaillees", authMiddleware, readLimiter, statistiquesController.getStatistiquesDetaillees);
 
 module.exports = router;

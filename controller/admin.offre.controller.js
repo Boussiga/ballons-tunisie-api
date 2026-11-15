@@ -15,7 +15,7 @@ const produitsManquants = async (produitIds) => {
 };
 
 /**
- * @desc  Get all offers — with pagination
+ * @desc  Get all offers: with pagination
  * @route GET /api/admin/offres
  * @access Private
  */

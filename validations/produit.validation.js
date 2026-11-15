@@ -3,7 +3,7 @@ const { paginationQuery } = require("./validate.middleware");
 
 
 
-// ─── GET list: pagination + filters ─────────────────────────────────────────
+// GET list: pagination + filters
 const listProduitsSchema = {
   query: z.object({
     page: z.coerce.number().int().min(1).default(1),
@@ -21,7 +21,7 @@ const listProduitsSchema = {
   }),
 };
 
-// ─── Creation ─────────────────────────────────────────────────────────────────
+// Creation
 const createProduitSchema = {
   body: z.object({
     nom: z
@@ -50,7 +50,7 @@ const createProduitSchema = {
   }),
 };
 
-// ─── Modification ─────────────────────────────────────────────────────────────
+// Modification
 const updateProduitSchema = {
   body: z.object({
     nom: z
@@ -73,7 +73,7 @@ const updateProduitSchema = {
   }),
 };
 
-// ─── Stock update ────────────────────────────────────────────────────────
+// Stock update
 const updateStockSchema = {
   body: z.object({
     stock: z.coerce.number({ required_error: "Le stock est requis.", invalid_type_error: "Le stock doit être un entier." })

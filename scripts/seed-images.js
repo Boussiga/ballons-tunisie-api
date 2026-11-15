@@ -32,7 +32,7 @@ const sportOf = (p) => {
     const file = path.join(__dirname, "ball-images", `${sport}.png`);
     const r = await cloudinary.uploader.upload(file, { folder: FOLDER, resource_type: "image" });
     await prisma.produit.update({ where: { id: p.id }, data: { imageUrl: r.secure_url } });
-    console.log(`✅ #${p.id} ${p.nom}  ←  ${sport}`);
+    console.log(`#${p.id} ${p.nom}  <-  ${sport}`);
   }
   console.log("\nTerminé. Vérifiez avec : npm run images:list");
 })()

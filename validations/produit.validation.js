@@ -82,7 +82,14 @@ const updateStockSchema = {
   }),
 };
 
+// Params of the gallery routes: /:id/images/:imageId
+const imageParams = z.object({
+  id: z.string().regex(/^\d+$/, "L'identifiant doit être un nombre entier positif.").transform(Number),
+  imageId: z.string().regex(/^\d+$/, "L'identifiant de l'image doit être un nombre entier positif.").transform(Number),
+});
+
 module.exports = {
+  imageParams,
   listProduitsSchema,
   createProduitSchema,
   updateProduitSchema,

@@ -1,7 +1,7 @@
 const { z } = require("zod");
 const { paginationQuery } = require("./validate.middleware");
 
-// ─── Product schema in a pack ─────────────────────────────────────────
+// Product schema in a pack
 const packProduitItem = z.object({
   produitId: z
     .number({ required_error: "produitId est requis.", invalid_type_error: "produitId doit être un nombre." })
@@ -14,11 +14,11 @@ const packProduitItem = z.object({
     .default(1),
 });
 
-// ─── No product twice in the same pack
+// No product twice in the same pack
 const noDuplicates = (items) =>
   new Set(items.map((i) => i.produitId)).size === items.length;
 
-// ─── GET list: pagination ────────────────────────────────────────────────────
+// GET list: pagination
 const listPacksSchema = {
   query: z.object({
     page: z.coerce.number().int().min(1).default(1),
@@ -31,7 +31,7 @@ const listPacksSchema = {
   }),
 };
 
-// ─── Creation ─────────────────────────────────────────────────────────────────
+// Creation
 const createPackSchema = {
   body: z.object({
     nom: z
@@ -57,7 +57,7 @@ const createPackSchema = {
   }),
 };
 
-// ─── Modification ─────────────────────────────────────────────────────────────
+// Modification
 const updatePackSchema = {
   body: z.object({
     nom: z

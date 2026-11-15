@@ -100,7 +100,7 @@ describe("passerCommande", () => {
 
     expect(res.status).toHaveBeenCalledWith(201);
     const { data } = tx.commande.create.mock.calls[0][0];
-    expect(data.total).toBe(110); // 2 × 50 + 10 delivery
+    expect(data.total).toBe(110); // 2 * 50 + 10 delivery
     expect(data.lignes.create[0]).not.toHaveProperty("offreId");
   });
 
@@ -127,7 +127,7 @@ describe("passerCommande", () => {
 
     expect(res.status).toHaveBeenCalledWith(201);
     const { data } = tx.commande.create.mock.calls[0][0];
-    // 49.99 * 0.85 = 42.49 → 3 × 42.49 + 120 + 10 delivery
+    // 49.99 * 0.85 = 42.49 -> 3 * 42.49 + 120 + 10 delivery
     expect(data.total).toBe(257.47);
     expect(data.fraisLivraison).toBe(10);
     expect(data).toMatchObject(client);
@@ -149,7 +149,7 @@ describe("passerCommande", () => {
     );
 
     const { data } = tx.commande.create.mock.calls[0][0];
-    expect(data).toMatchObject({ fraisLivraison: 10, total: 125 }); // 4 × 25 + 15 + 10
+    expect(data).toMatchObject({ fraisLivraison: 10, total: 125 }); // 4 * 25 + 15 + 10
     expect(res.json.mock.calls[0][0].commande).toMatchObject({ fraisLivraison: 10, total: 125 });
   });
 

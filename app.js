@@ -63,6 +63,10 @@ app.use((err, req, res, next) => {
     return res.status(400).json({ message: "Fichier trop volumineux. Max 5 Mo." });
   }
 
+  if (err.code === "LIMIT_FILE_COUNT" || err.code === "LIMIT_UNEXPECTED_FILE") {
+    return res.status(400).json({ message: "Maximum 5 images par produit (champ \"images\")." });
+  }
+
   if (err.name === "MulterError") {
     return res.status(400).json({ message: "Envoi de fichier invalide." });
   }

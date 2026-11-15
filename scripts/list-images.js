@@ -8,8 +8,9 @@ const prisma = require("../config/prisma");
 (async () => {
   if (!isConfigured()) throw new Error("Variables CLOUDINARY_* manquantes dans .env");
   const { resources } = await cloudinary.api.resources({ type: "upload", prefix: "ballons-tunisie/", max_results: 500 });
-  const produits = await prisma.produit.findMany({ select: { id: true, nom: true, imageUrl: true } });
-  const used = new Map(produits.filter((p) => p.imageUrl).map((p) => [p.imageUrl, p]));
+  const produits = await prisma.produit.findMany({ select: { id: true, nom: true, imageUrl: true, images: { select: { url: true } } } });
+  // An image is used when it is the main image or part of a product gallery
+  const used = new Map(produits.flatMap((p) => [p.imageUrl, ...p.images.map((i) => i.url)].filter(Boolean).map((url) => [url, p])));
 
   console.log(`\n${resources.length} image(s) sur Cloudinary\n`);
   for (const r of resources) {

@@ -6,7 +6,7 @@ jest.mock("../../../config/cloudinary", () => ({
 
 const { cloudinary, isConfigured } = require("../../../config/cloudinary");
 const {
-  uploadToCloudinary, deleteImage, publicIdFromUrl, detectImageType,
+  uploadToCloudinary, supprimerEnvois, deleteImage, publicIdFromUrl, detectImageType,
 } = require("../../../middelwhere/upload.middleware");
 const { mockResponse } = require("../../helpers/http");
 
@@ -30,42 +30,67 @@ describe("detectImageType", () => {
 });
 
 describe("uploadToCloudinary", () => {
-  it("calls next without a file", () => {
+  const URL_A = "https://res.cloudinary.com/x/image/upload/v1/ballons-tunisie/produits/a.png";
+  // Each upload answers with a url/public_id built from its call number, or fails when asked
+  const cloudinaryRepond = (echecs = []) => {
+    let n = 0;
+    cloudinary.uploader.upload_stream.mockImplementation((opts, cb) => {
+      const i = n++;
+      return {
+        end: () => (echecs.includes(i)
+          ? cb(new Error("secret detail"))
+          : cb(null, { secure_url: URL_A.replace("a.png", `img${i}.png`), public_id: `ballons-tunisie/produits/img${i}` })),
+      };
+    });
+  };
+
+  it("calls next without files", async () => {
     const next = jest.fn();
-    uploadToCloudinary({}, mockResponse(), next);
-    expect(next).toHaveBeenCalled();
+    await uploadToCloudinary({ files: [] }, mockResponse(), next);
+    await uploadToCloudinary({}, mockResponse(), next);
+    expect(next).toHaveBeenCalledTimes(2);
     expect(cloudinary.uploader.upload_stream).not.toHaveBeenCalled();
   });
 
-  it("returns 503 when Cloudinary is not configured", () => {
+  it("returns 503 when Cloudinary is not configured", async () => {
     isConfigured.mockReturnValue(false);
     const res = mockResponse();
-    uploadToCloudinary({ file: { buffer: PNG } }, res, jest.fn());
+    await uploadToCloudinary({ files: [{ buffer: PNG }] }, res, jest.fn());
     expect(res.status).toHaveBeenCalledWith(503);
   });
 
-  it("uploads the buffer and exposes url + publicId", () => {
-    const end = jest.fn();
-    cloudinary.uploader.upload_stream.mockImplementation((opts, cb) => {
-      expect(opts.folder).toBe("ballons-tunisie/produits");
-      expect(opts.allowed_formats).toEqual(["jpg", "jpeg", "png", "webp"]);
-      return { end: (buf) => { end(buf); cb(null, { secure_url: "https://res.cloudinary.com/x/image/upload/v1/ballons-tunisie/produits/a.png", public_id: "ballons-tunisie/produits/a" }); } };
-    });
-    const req = { file: { buffer: PNG } };
+  it("uploads every file and exposes url + publicId on each", async () => {
+    cloudinaryRepond();
+    const req = { files: [{ buffer: PNG }, { buffer: JPG }, { buffer: WEBP }] };
     const next = jest.fn();
-    uploadToCloudinary(req, mockResponse(), next);
-    expect(end).toHaveBeenCalledWith(PNG);
-    expect(req.file.url).toMatch(/^https:\/\/res\.cloudinary\.com\//);
-    expect(req.file.publicId).toBe("ballons-tunisie/produits/a");
+    await uploadToCloudinary(req, mockResponse(), next);
+    expect(cloudinary.uploader.upload_stream).toHaveBeenCalledTimes(3);
+    const opts = cloudinary.uploader.upload_stream.mock.calls[0][0];
+    expect(opts.folder).toBe("ballons-tunisie/produits");
+    expect(opts.allowed_formats).toEqual(["jpg", "jpeg", "png", "webp"]);
+    expect(req.files.map((f) => f.publicId)).toEqual([0, 1, 2].map((i) => `ballons-tunisie/produits/img${i}`));
+    expect(req.files[0].url).toMatch(/^https:\/\/res\.cloudinary\.com\//);
     expect(next).toHaveBeenCalled();
   });
 
-  it("returns 502 and hides details when Cloudinary fails", () => {
-    cloudinary.uploader.upload_stream.mockImplementation((o, cb) => ({ end: () => cb(new Error("secret detail")) }));
+  it("all or nothing: one failure removes the uploaded ones, returns 502 and hides details", async () => {
+    cloudinaryRepond([1]);
     const res = mockResponse();
-    uploadToCloudinary({ file: { buffer: PNG } }, res, jest.fn());
+    const next = jest.fn();
+    await uploadToCloudinary({ files: [{ buffer: PNG }, { buffer: PNG }, { buffer: PNG }] }, res, next);
     expect(res.status).toHaveBeenCalledWith(502);
+    expect(next).not.toHaveBeenCalled();
     expect(JSON.stringify(res.json.mock.calls)).not.toMatch(/secret detail/);
+    const supprimees = cloudinary.uploader.destroy.mock.calls.map((c) => c[0]).sort();
+    expect(supprimees).toEqual(["ballons-tunisie/produits/img0", "ballons-tunisie/produits/img2"]);
+  });
+});
+
+describe("supprimerEnvois", () => {
+  it("removes the uploaded files of a failed request", async () => {
+    await supprimerEnvois([{ publicId: "p/a" }, { publicId: "p/b" }]);
+    expect(cloudinary.uploader.destroy).toHaveBeenCalledTimes(2);
+    await expect(supprimerEnvois(undefined)).resolves.toEqual([]);
   });
 });
 

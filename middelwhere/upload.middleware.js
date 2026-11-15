@@ -1,13 +1,14 @@
 const multer = require("multer");
 const { cloudinary, FOLDER, isConfigured } = require("../config/cloudinary");
+const { MAX_IMAGES } = require("../utils/produitImages");
 
-const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_SIZE = 5 * 1024 * 1024; // 5 MB per image
 const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp"];
 
 // Files are kept in memory only (never written to disk) then streamed to Cloudinary.
 const multerUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: MAX_SIZE, files: 1 },
+  limits: { fileSize: MAX_SIZE, files: MAX_IMAGES },
   fileFilter: (req, file, cb) =>
     ALLOWED_MIME.includes(file.mimetype)
       ? cb(null, true)
@@ -23,45 +24,70 @@ const detectImageType = (buf) => {
   return null;
 };
 
-/** Step 1: parse the multipart "image" field into req.file (memory). */
-const parseImage = (req, res, next) => {
-  multerUpload.single("image")(req, res, (err) => {
+/**
+ * Step 1: parse the multipart images into req.files (memory), at most MAX_IMAGES.
+ * - "images": new images, added to the product gallery
+ * - "image":  one image replacing the main image (field used before the gallery existed)
+ * req.imagePrincipale is set when the "image" field was sent.
+ */
+const parseImages = (req, res, next) => {
+  multerUpload.fields([
+    { name: "images", maxCount: MAX_IMAGES },
+    { name: "image", maxCount: 1 },
+  ])(req, res, (err) => {
     if (err) return next(err);
-    if (req.file && !detectImageType(req.file.buffer)) {
+    const champs = req.files || {};
+    req.imagePrincipale = Boolean(champs.image && champs.image.length);
+    req.files = [...(champs.image || []), ...(champs.images || [])]; // replacing image first
+    if (req.files.length > MAX_IMAGES) {
+      return res.status(400).json({ message: `Maximum ${MAX_IMAGES} images par produit.` });
+    }
+    if (req.files.some((f) => !detectImageType(f.buffer))) {
       return res.status(400).json({ message: "Fichier invalide : ce n'est pas une image JPG, PNG ou WebP." });
     }
     next();
   });
 };
 
+const envoyerFichier = (file) =>
+  new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: FOLDER, resource_type: "image", allowed_formats: ["jpg", "jpeg", "png", "webp"] },
+      (error, result) => (error || !result ? reject(error || new Error("empty result")) : resolve(result))
+    );
+    stream.end(file.buffer);
+  });
+
 /**
- * Step 2: send req.file to Cloudinary (run AFTER validation so rejected requests
- * never create orphan images). Sets req.file.url and req.file.publicId.
+ * Step 2: send req.files to Cloudinary (run AFTER validation so rejected requests
+ * never create orphan images). Sets url and publicId on each file.
+ * All or nothing: if one upload fails, the others are removed.
  */
-const uploadToCloudinary = (req, res, next) => {
-  if (!req.file) return next();
+const uploadToCloudinary = async (req, res, next) => {
+  const files = req.files || [];
+  if (files.length === 0) return next();
   if (!isConfigured()) {
     return res.status(503).json({ message: "Stockage d'images non configuré (variables CLOUDINARY_*)." });
   }
 
-  const stream = cloudinary.uploader.upload_stream(
-    {
-      folder: FOLDER,
-      resource_type: "image",
-      allowed_formats: ["jpg", "jpeg", "png", "webp"],
-    },
-    (error, result) => {
-      if (error || !result) {
-        console.error("Cloudinary upload error:", error && error.message);
-        return res.status(502).json({ message: "Échec de l'envoi de l'image. Réessayez." });
-      }
-      req.file.url = result.secure_url;
-      req.file.publicId = result.public_id;
-      next();
-    }
-  );
-  stream.end(req.file.buffer);
+  const resultats = await Promise.allSettled(files.map(envoyerFichier));
+  const echec = resultats.find((r) => r.status === "rejected");
+  if (echec) {
+    console.error("Cloudinary upload error:", echec.reason && echec.reason.message);
+    await Promise.all(
+      resultats.filter((r) => r.status === "fulfilled").map((r) => deleteImage(r.value.public_id))
+    );
+    return res.status(502).json({ message: "Échec de l'envoi des images. Réessayez." });
+  }
+  resultats.forEach((r, i) => {
+    files[i].url = r.value.secure_url;
+    files[i].publicId = r.value.public_id;
+  });
+  next();
 };
+
+/** Removes from Cloudinary the files uploaded for a request that then failed. */
+const supprimerEnvois = (files) => Promise.all((files || []).map((f) => deleteImage(f.publicId)));
 
 /** Derive the Cloudinary public_id from a stored URL (null if it isn't ours). */
 const publicIdFromUrl = (url) => {
@@ -83,4 +109,4 @@ const deleteImage = async (urlOrPublicId) => {
   }
 };
 
-module.exports = { parseImage, uploadToCloudinary, deleteImage, publicIdFromUrl, detectImageType };
+module.exports = { parseImages, uploadToCloudinary, supprimerEnvois, deleteImage, publicIdFromUrl, detectImageType };

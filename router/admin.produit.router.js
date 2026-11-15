@@ -12,7 +12,7 @@ const {
 const { uploadLimiter, readLimiter } = require("../config/rateLimiter");
 const  produitController = require("../controller/admin.produit.controller");
 
-// GET list — pagination + filters (category, search, lowStock)
+// GET list: pagination + filters (category, search, lowStock)
 router.get("/getAllProduits", authMiddleware, readLimiter, validate(listProduitsSchema), produitController.getAllProduits);
 
 // GET by ID

@@ -176,11 +176,22 @@ All routes are prefixed with `/api/admin`.
 |--------|----------------------------------|---------------------------|
 | GET    | `/getAllProduits?page=1&limit=10` | List with pagination      |
 | GET    | `/getProduitById/:id`            | Get one by ID             |
-| POST   | `/createProduit`                 | Create (with image upload)|
-| PUT    | `/updateProduit/:id`             | Update                    |
-| DELETE | `/deleteProduit/:id`             | Delete                    |
+| POST   | `/createProduit`                 | Create, with up to 5 images |
+| PUT    | `/updateProduit/:id`             | Update, add images to the gallery |
+| DELETE | `/deleteProduit/:id`             | Delete (and its images)   |
+| DELETE | `/deleteImage/:id/images/:imageId` | Remove one image from the gallery |
+| PATCH  | `/setImagePrincipale/:id/images/:imageId` | Make an image the main image |
 | GET    | `/verifierStock/:id/stock`       | Check stock status        |
 | PATCH  | `/updateStock/:id/stock`         | Update stock quantity     |
+
+#### Product images
+
+A product has a gallery of **up to 5 images** (JPG, PNG or WebP, 5 MB max each), stored on Cloudinary.
+
+- `createProduit` / `updateProduit` accept multipart files in the `images` field (several files allowed). On update they are added after the current images; the request is refused if the gallery would exceed 5 images.
+- The `image` field (single file) replaces the main image.
+- The first image is the main one: it is also returned as `imageUrl`, used by the store lists, packs, offers and order tracking.
+- Products return `images: [{ id, url, ordre }]`, main image first. The store product page returns `images: [{ id, url }]`.
 
 ###  Packs (`/packs`)
 

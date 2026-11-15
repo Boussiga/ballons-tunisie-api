@@ -3,7 +3,7 @@ const router = express.Router();
 const { readLimiter } = require("../config/rateLimiter");
 const packController = require("../controller/store.pack.controller");
 
-// GET all packs — public catalog with pagination
+// GET all packs: public catalog with pagination
 router.get("/getAllPacksPublic", readLimiter, packController.getAllPacksPublic);
 
 // GET single pack by UUID

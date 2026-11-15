@@ -40,7 +40,7 @@ const GOUVERNORATS = [
   regex: new RegExp(`\\b(${g.alias.join("|")})\\b`, "g"),
 }));
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 const r2 = (n) => Math.round(n * 100) / 100;
 const pct = (part, total) => (total > 0 ? r2((part / total) * 100) : 0);
@@ -54,7 +54,7 @@ const evolution = (actuel, precedent) => {
 const pad = (n) => String(n).padStart(2, "0");
 const formatJour = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-// "AAAA-MM-JJ" → local midnight
+// "AAAA-MM-JJ" -> local midnight
 const parseJour = (s) => {
   const [y, m, d] = s.split("-").map(Number);
   return new Date(y, m - 1, d);
@@ -212,7 +212,7 @@ const getStatistiquesDetaillees = async (req, res) => {
         })
       : [];
 
-    // ── Summary ──────────────────────────────────────────────────────────────
+    // Summary
     const somme = (list, fn) => list.reduce((s, x) => s + fn(x), 0);
     const articles = (c) => somme(c.lignes, (l) => l.quantite);
 
@@ -234,7 +234,7 @@ const getStatistiquesDetaillees = async (req, res) => {
     }
     for (const s of Object.values(parStatut)) s.montant = r2(s.montant);
 
-    // ── Time series (empty buckets included so charts have no gaps) ─────────
+    // Time series (empty buckets included so charts have no gaps)
     const series = new Map();
     for (let d = debutBucket(dateDebut, granularite); d < finExclue; d = bucketSuivant(d, granularite)) {
       const cle = cleBucket(d, granularite);
@@ -257,7 +257,7 @@ const getStatistiquesDetaillees = async (req, res) => {
       panierMoyen: p.commandes ? r2(p.chiffreAffaires / p.commandes) : 0,
     }));
 
-    // ── Products / packs / offers / categories ──────────────────────────────
+    // Products / packs / offers / categories
     const parProduit = new Map();
     const parPack = new Map();
     const parOffre = new Map();
@@ -305,7 +305,7 @@ const getStatistiquesDetaillees = async (req, res) => {
       valides.filter((c) => c.lignes.some((l) => l.offre)).map((c) => c.id)
     ).size;
 
-    // ── Customers ────────────────────────────────────────────────────────────
+    // Customers
     const parClient = new Map();
     for (const c of valides) {
       cumuler(
@@ -318,7 +318,7 @@ const getStatistiquesDetaillees = async (req, res) => {
     const nouveauxClients = historiqueClients.filter((h) => h._min.dateCommande >= dateDebut).length;
     const clientsFideles = historiqueClients.filter((h) => h._count._all >= 2).length;
 
-    // ── Regions ──────────────────────────────────────────────────────────────
+    // Regions
     const parRegion = new Map();
     for (const c of valides) {
       const nom = detecterGouvernorat(c.adresseLivraison);
@@ -332,7 +332,7 @@ const getStatistiquesDetaillees = async (req, res) => {
       part: pct(r.chiffreAffaires, chiffreAffaires),
     }));
 
-    // ── Buying habits ────────────────────────────────────────────────────────
+    // Buying habits
     const parJour = JOURS_SEMAINE.map((jour) => ({ jour, commandes: 0, chiffreAffaires: 0 }));
     const parHeure = Array.from({ length: 24 }, (_, heure) => ({ heure, commandes: 0, chiffreAffaires: 0 }));
     for (const c of valides) {
@@ -345,7 +345,7 @@ const getStatistiquesDetaillees = async (req, res) => {
     }
     for (const x of [...parJour, ...parHeure]) x.chiffreAffaires = r2(x.chiffreAffaires);
 
-    // ── Stock health ─────────────────────────────────────────────────────────
+    // Stock health
     // Only direct product lines decrement stock, so coverage uses those sales
     const quantiteVendue = new Map(produitsVendus.map((p) => [p.id, p.quantite]));
     const risqueRupture = produits
@@ -371,7 +371,7 @@ const getStatistiquesDetaillees = async (req, res) => {
     const ruptures = produits.filter((p) => p.stock === 0);
     const stockFaible = produits.filter((p) => p.stock > 0 && p.stock < SEUIL_STOCK_FAIBLE);
 
-    // ── Alerts: what needs the admin's attention ────────────────────────────
+    // Alerts: what needs the admin's attention
     const tauxAnnulation = pct(annulees, commandes.length);
     const evolutionCA = evolution(chiffreAffaires, chiffreAffairesPrec);
     const alertes = [];

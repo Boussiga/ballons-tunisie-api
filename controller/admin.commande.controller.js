@@ -2,7 +2,7 @@ const prisma = require("../config/prisma");
 const { FRAIS_LIVRAISON, totalAvecLivraison } = require("../utils/commande");
 
 /**
- * @desc  Get all orders — pagination + filters
+ * @desc  Get all orders: pagination + filters
  * @route GET /api/admin/commandes/getAllCommandes
  * @access Private
  */
@@ -77,7 +77,7 @@ const getCommandeById = async (req, res) => {
 };
 
 /**
- * @desc  Create an order manually (admin) — calculates total + decrements stock
+ * @desc  Create an order manually (admin): calculates total + decrements stock
  * @route POST /api/admin/commandes/createCommande
  * @access Private
  */

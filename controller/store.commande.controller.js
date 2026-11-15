@@ -3,7 +3,7 @@ const { offreValideWhere, appliquerReduction } = require("../utils/offre");
 const { FRAIS_LIVRAISON, totalAvecLivraison } = require("../utils/commande");
 
 /**
- * @desc  Place an order as a guest — validates stock, applies offers, atomic transaction
+ * @desc  Place an order as a guest: validates stock, applies offers, atomic transaction
  * @route POST /api/store/commandes
  * @access Public
  */
@@ -11,7 +11,7 @@ class StockError extends Error {}
 
 const passerCommande = async (req, res) => {
   const { nomClient, telephoneClient, adresseLivraison } = req.body;
-  // Same product/pack/offer repeated on several lines → one line (stock check must see the total)
+  // Same product/pack/offer repeated on several lines -> one line (stock check must see the total)
   const merged = new Map();
   for (const l of req.body.lignes) {
     const key = `${l.produitId || ""}|${l.packId || ""}|${l.offreId || ""}`;
@@ -117,7 +117,7 @@ const passerCommande = async (req, res) => {
 };
 
 /**
- * @desc  Track an order by ID (public) — hides sensitive data
+ * @desc  Track an order by ID (public): hides sensitive data
  * @route GET /api/store/commandes/:id
  * @access Public
  */
@@ -141,7 +141,7 @@ const suiviCommande = async (req, res) => {
 
     if (!commande) return res.status(404).json({ message: "Commande introuvable." });
 
-    // Return tracking info only — no full address
+    // Return tracking info only: no full address
     res.status(200).json({
       id: commande.id,
       statut: commande.statut,

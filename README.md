@@ -96,11 +96,13 @@ PORT=3000
 npx prisma db push
 ```
 
-### 5. Seed the database (optional)
+### 5. Load the demo data (development only)
 
 ```bash
 npm run db:seed
 ```
+
+Demo data for client validation sessions: it **empties the database** first, and refuses to run when `NODE_ENV=production`. To create only the first admin account (production), use `npm run admin:create`.
 
 ### 6. Start the server
 
@@ -123,19 +125,20 @@ npm run test:coverage
 
 ##  Docker
 
-`docker-compose.yml` starts MySQL, the API and the store (built from
-`../ballons-tunisie-frontoffice`, which must be next to this folder).
+`docker-compose.yml` is the production stack: MySQL, the API, the store (`../ballons-tunisie-frontoffice`)
+and the back office (`../ballons-tunisie-backoffice`), the three repositories side by side.
 
 ```bash
-docker compose up --build                  # start everything
-docker compose exec api npm run db:seed    # optional, in another terminal: demo data + admin
-docker compose down                        # stop
+cp .env.production.example .env.production                                    # then fill in every value
+docker compose --env-file .env.production up -d --build                       # start everything
+docker compose --env-file .env.production exec api npm run admin:create       # first admin account
+docker compose --env-file .env.production down                                # stop
 ```
 
-- Store: http://localhost:8080 - API (for the admin back-office): http://localhost:3000
-- The tables are created automatically when the API starts (`prisma db push`).
-- The database is kept in a Docker volume (`db-data`); product images live on Cloudinary (set the `CLOUDINARY_*` variables in a `.env` next to `docker-compose.yml`).
-- The passwords and `JWT_SECRET` in `docker-compose.yml` are for local development only.
+- Store: port 8080, back office: port 8081 (put HTTPS in front). The API is only reachable from the server: both front ends call it through their nginx.
+- Docker refuses to start while a required value of `.env.production` is missing.
+- The tables are created automatically when the API starts (`prisma db push`), the database is kept in the `db-data` volume, product images are on Cloudinary.
+- Full procedure: [DEPLOY.md](DEPLOY.md).
 
 ---
 
@@ -304,7 +307,8 @@ All `GET` list endpoints support the following query parameters:
 
 ```bash
 npm run db:migrate   # Run Prisma migrations
-npm run db:seed      # Seed initial data
+npm run db:seed      # Demo data for client validation (empties the database, refused in production)
+npm run admin:create # Create the first admin account only (safe in production)
 npm run db:studio    # Open Prisma Studio (visual DB explorer)
 ```
 

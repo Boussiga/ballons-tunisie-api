@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const prisma = require("../config/prisma");
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 /**
  * Génère un access token JWT (courte durée : 15 minutes)
@@ -31,10 +31,10 @@ const generateRefreshToken = async (adminId) => {
   return token;
 };
 
-// ─── Controllers ──────────────────────────────────────────────────────────────
+// Controllers
 
 /**
- * @desc  Connexion administrateur — renvoie access + refresh token
+ * @desc  Connexion administrateur: renvoie access + refresh token
  * @route POST /api/admin/login
  * @access Public
  */
@@ -117,7 +117,7 @@ const refreshToken = async (req, res) => {
         .json({ message: "Refresh token expiré. Veuillez vous reconnecter." });
     }
 
-    // ✅ Token valide — générer un nouvel access token + rotation du refresh token
+    // Token valide: générer un nouvel access token + rotation du refresh token
     const newAccessToken = generateAccessToken(stored.admin);
 
     // Rotation: revoke old refresh token and create a new one
@@ -139,7 +139,7 @@ const refreshToken = async (req, res) => {
 };
 
 /**
- * @desc  Déconnexion — révoque le refresh token
+ * @desc  Déconnexion: révoque le refresh token
  * @route POST /api/admin/logout
  * @access Private
  */
@@ -273,7 +273,7 @@ const updateProfil = async (req, res) => {
 };
 
 /**
- * @desc  Change admin password — revokes all sessions after change
+ * @desc  Change admin password: revokes all sessions after change
  * @route PATCH /api/auth/profil/password
  * @access Private
  */

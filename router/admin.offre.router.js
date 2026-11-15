@@ -10,7 +10,7 @@ const {
 const { readLimiter } = require("../config/rateLimiter");
 const offreController = require("../controller/admin.offre.controller");
 
-// GET list — pagination + active/search filter
+// GET list: pagination + active/search filter
 router.get("/getAllOffres", authMiddleware, readLimiter, validate(listOffresSchema), offreController.getAllOffres,);
 
 // GET by ID

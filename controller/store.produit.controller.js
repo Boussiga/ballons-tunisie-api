@@ -2,7 +2,7 @@ const prisma = require("../config/prisma");
 const { offresValidesSelect, avecOffreActive } = require("../utils/offre");
 
 /**
- * @desc  Public product catalog — only in-stock items, hides exact stock count
+ * @desc  Public product catalog: only in-stock items, hides exact stock count
  * @route GET /api/store/produits
  * @access Public
  */

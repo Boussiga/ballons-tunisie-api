@@ -10,7 +10,7 @@ const {
 const { readLimiter } = require("../config/rateLimiter");
 const packController = require("../controller/admin.pack.controller");
 
-// GET list — pagination + search
+// GET list: pagination + search
 router.get("/getAllPacks", authMiddleware, readLimiter, validate(listPacksSchema),packController.getAllPacks);
 
 // GET by ID

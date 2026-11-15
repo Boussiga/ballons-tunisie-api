@@ -1,7 +1,7 @@
 const { z } = require("zod");
 const { paginationQuery } = require("./validate.middleware");
 
-// ─── Register ─────────────────────────────────────────────────────────────────
+// Register
 const registerSchema = {
   body: z.object({
     nom: z
@@ -24,7 +24,7 @@ const registerSchema = {
   }),
 };
 
-// ─── Login ────────────────────────────────────────────────────────────────────
+// Login
 const loginSchema = {
   body: z.object({
     email: z
@@ -38,7 +38,7 @@ const loginSchema = {
   }),
 };
 
-// ─── Refresh Token ────────────────────────────────────────────────────────────
+// Refresh Token
 const refreshSchema = {
   body: z.object({
     refreshToken: z
@@ -47,7 +47,7 @@ const refreshSchema = {
   }),
 };
 
-// ─── Logout ───────────────────────────────────────────────────────────────────
+// Logout
 const logoutSchema = {
   body: z.object({
     refreshToken: z
@@ -56,7 +56,7 @@ const logoutSchema = {
   }),
 };
 
-// ─── Update profile ───────────────────────────────────────────────────────────
+// Update profile
 // Same rules as register, but motDePasse is optional:
 // if it is not sent, the current password stays unchanged.
 const updateProfilSchema = {
@@ -74,7 +74,7 @@ const updateProfilSchema = {
   }),
 };
 
-// ─── Update password ──────────────────────────────────────────────────────────
+// Update password
 const updatePasswordSchema = {
   body: z.object({
     ancienMotDePasse: z.string({ required_error: "L'ancien mot de passe est requis." }).min(1),

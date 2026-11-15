@@ -23,7 +23,7 @@ const allowedOrigins = (process.env.FRONTEND_URL || "").split(",").map((o) => o.
 app.use(cors({ origin: allowedOrigins }));
 
 
-// ─── Global Middlewares
+// Global Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -34,7 +34,7 @@ app.use(morgan("dev"));
 app.use(["/api/admin", "/api/auth"], adminLimiter);
 app.use("/api", globalLimiter);
 
-// ─── Admin Routes
+// Admin Routes
 app.use("/api/auth", require("./router/admin.auth.router"));
 app.use("/api/admin/produits", require("./router/admin.produit.router"));
 app.use("/api/admin/categories", require("./router/admin.categorie.router"));
@@ -43,18 +43,18 @@ app.use("/api/admin/offres", require("./router/admin.offre.router"));
 app.use("/api/admin/commandes", require("./router/admin.commande.router"));
 app.use("/api/admin/dashboard", require("./router/admin.dashboard.router"));
 
-// ─── Store Routes (Public — no auth required) ─────────────────────────────────
+// Store Routes (Public, no auth required)
 app.use("/api/store/produits",  require("./router/store.produit.router"));
 app.use("/api/store/packs",     require("./router/store.pack.router"));
 app.use("/api/store/offres",    require("./router/store.offre.router"));
 app.use("/api/store/commandes", require("./router/store.commande.router"));
 
-// ─── 404
+// 404
 app.use((req, res) => {
   res.status(404).json({ message: "Route introuvable." });
 });
 
-// ─── Global Error Handler
+// Global Error Handler
 app.use((err, req, res, next) => {
   console.error(`Unhandled error: ${err.message}`);
 
@@ -72,14 +72,14 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: "Erreur serveur interne." });
 });
 
-// ─── HTTP Server ──────────────────────────────────────────────────────────────
+// HTTP Server
 
 const server = http.createServer(app);
 server.on("error", (error) => {
   if (error.code === "EADDRINUSE") {
-    console.error(` Le port ${PORT} est déjà utilisé.`);
+    console.error(`Le port ${PORT} est déjà utilisé.`);
   } else if (error.code === "EACCES") {
-    console.error(` Permission refusée pour le port ${PORT}.`);
+    console.error(`Permission refusée pour le port ${PORT}.`);
   } else {
     console.error(`Erreur serveur : ${error.message}`);
   }
@@ -95,6 +95,6 @@ server.listen(PORT, async () => {
     await prisma.$connect();
     console.log("Connexion à la base de données réussie !");
   } catch (error) {
-    console.error(`❌ Erreur de connexion à la base de données : ${error.message}`);
+    console.error(`Erreur de connexion à la base de données : ${error.message}`);
   }
 });

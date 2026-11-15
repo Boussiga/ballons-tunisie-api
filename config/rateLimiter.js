@@ -15,7 +15,7 @@ const isAdminRoute = (req) => /^\/api\/(admin|auth)(\/|$)/.test(req.originalUrl)
 
 /**
  * Global limiter: 15 requests per 40 seconds per IP
- * Applied to all public API routes (the store) — admin routes use adminLimiter
+ * Applied to all public API routes (the store): admin routes use adminLimiter
  */
 const globalLimiter = rateLimit({
   windowMs: 40 * 1000, // 40 seconds

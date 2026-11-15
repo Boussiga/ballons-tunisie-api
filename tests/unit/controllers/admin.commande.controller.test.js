@@ -32,7 +32,7 @@ describe("calculerTotal", () => {
 
     await calculerTotal(mockRequest({ params: { id: "c1" } }), res);
 
-    // 2 × 40 + 33.33 + 10
+    // 2 * 40 + 33.33 + 10
     expect(prisma.commande.update).toHaveBeenCalledWith({ where: { id: "c1" }, data: { total: 123.33 } });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ commandeId: "c1", total: 123.33 });
@@ -71,7 +71,7 @@ describe("createCommande", () => {
     await createCommande(mockRequest({ body }), res);
 
     expect(res.status).toHaveBeenCalledWith(201);
-    expect(tx.commande.create.mock.calls[0][0].data).toMatchObject({ fraisLivraison: 10, total: 100 }); // 2 × 45 + 10
+    expect(tx.commande.create.mock.calls[0][0].data).toMatchObject({ fraisLivraison: 10, total: 100 }); // 2 * 45 + 10
     expect(tx.produit.update).toHaveBeenCalledWith({ where: { id: 1 }, data: { stock: { decrement: 2 } } });
   });
 

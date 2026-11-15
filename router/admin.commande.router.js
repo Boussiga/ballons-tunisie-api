@@ -6,7 +6,7 @@ const { listCommandesSchema, updateStatutSchema, createCommandeSchema } = requir
 const { readLimiter } = require("../config/rateLimiter");
 const commandeController = require("../controller/admin.commande.controller");
 
-// GET list — pagination + status + dates filter
+// GET list: pagination + status + dates filter
 router.get("/getAllCommandes", authMiddleware, readLimiter, validate(listCommandesSchema), commandeController.getAllCommandes);
 
 // GET by ID

@@ -1,7 +1,7 @@
 const { v2: cloudinary } = require("cloudinary");
 
 // Credentials come ONLY from environment variables (never hardcode them).
-// Dashboard → Settings → API Keys: https://console.cloudinary.com/settings/api-keys
+// Dashboard -> Settings -> API Keys: https://console.cloudinary.com/settings/api-keys
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,

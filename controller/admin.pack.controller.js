@@ -8,7 +8,7 @@ const calculerPrix = (lignes, produitsDB, pct = 0) => {
 };
 
 /**
- * @desc  Get all packs — with pagination
+ * @desc  Get all packs: with pagination
  * @route GET /api/admin/packs
  * @access Private
  */
@@ -82,7 +82,7 @@ const getPackById = async (req, res) => {
 };
 
 /**
- * @desc  Create a pack — price = sum of products minus the admin discount (%)
+ * @desc  Create a pack: price = sum of products minus the admin discount (%)
  * @route POST /api/admin/packs
  * @access Private
  */

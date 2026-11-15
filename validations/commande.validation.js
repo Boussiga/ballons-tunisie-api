@@ -3,7 +3,7 @@ const { z } = require("zod");
 // Valid order statuses
 const STATUTS = ["en_attente", "confirmee", "livree", "annulee"];
 
-// ─── GET list: pagination + filters ──────────────────────────────────────────
+// GET list: pagination + filters
 const listCommandesSchema = {
   query: z.object({
     page: z.coerce.number().int().min(1).default(1),
@@ -15,7 +15,7 @@ const listCommandesSchema = {
   }),
 };
 
-// ─── Status update ────────────────────────────────────────────────────────────
+// Status update
 const updateStatutSchema = {
   body: z.object({
     statut: z.enum(STATUTS, {
@@ -25,7 +25,7 @@ const updateStatutSchema = {
   }),
 };
 
-// ─── Create order (admin) ─────────────────────────────────────────────────────
+// Create order (admin)
 const ligneItem = z
   .object({
     produitId: z.number().int().positive().optional(),

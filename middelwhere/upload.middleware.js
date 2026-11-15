@@ -23,7 +23,7 @@ const detectImageType = (buf) => {
   return null;
 };
 
-/** Step 1 — parse the multipart "image" field into req.file (memory). */
+/** Step 1: parse the multipart "image" field into req.file (memory). */
 const parseImage = (req, res, next) => {
   multerUpload.single("image")(req, res, (err) => {
     if (err) return next(err);
@@ -35,7 +35,7 @@ const parseImage = (req, res, next) => {
 };
 
 /**
- * Step 2 — send req.file to Cloudinary (run AFTER validation so rejected requests
+ * Step 2: send req.file to Cloudinary (run AFTER validation so rejected requests
  * never create orphan images). Sets req.file.url and req.file.publicId.
  */
 const uploadToCloudinary = (req, res, next) => {

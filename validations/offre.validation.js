@@ -1,13 +1,13 @@
 const { z } = require("zod");
 const { paginationQuery } = require("./validate.middleware");
 
-// ─── Helper: ISO 8601 date ────────────────────────────────────────────────────
+// Helper: ISO 8601 date
 const isoDateString = (label) =>
   z
     .string({ required_error: `${label} est requise.` })
     .datetime({ message: `${label} doit être une date ISO 8601 valide (ex: 2024-10-01T00:00:00Z).` });
 
-// ─── Products targeted by an offer ───────────────────────────────────────────
+// Products targeted by an offer
 const produitIdsSchema = z
   .array(
     z
@@ -19,7 +19,7 @@ const produitIdsSchema = z
   .min(1, "Une offre doit concerner au moins un produit.")
   .refine((ids) => new Set(ids).size === ids.length, "Un produit ne peut apparaître qu'une seule fois dans une offre.");
 
-// ─── GET list: pagination + active filter ─────────────────────────────────────
+// GET list: pagination + active filter
 const listOffresSchema = {
   query: z.object({
     page: z.coerce.number().int().min(1).default(1),
@@ -39,7 +39,7 @@ const listOffresSchema = {
   }),
 };
 
-// ─── Creation ─────────────────────────────────────────────────────────────────
+// Creation
 const createOffreSchema = {
   body: z
     .object({
@@ -68,7 +68,7 @@ const createOffreSchema = {
     ),
 };
 
-// ─── Modification ─────────────────────────────────────────────────────────────
+// Modification
 const updateOffreSchema = {
   body: z
     .object({

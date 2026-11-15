@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const multer = require("multer");
-const path = require("path");
+const { parseImage, uploadToCloudinary } = require("../middelwhere/upload.middleware");
 const authMiddleware = require("../middelwhere/auth.middleware");
 const { validate, idParam } = require("../validations/validate.middleware");
 const {
@@ -13,30 +12,6 @@ const {
 const { uploadLimiter, readLimiter } = require("../config/rateLimiter");
 const  produitController = require("../controller/admin.produit.controller");
 
-// ─── Multer configuration ──────────────────────────────────────────────────────
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
-  },
-});
-
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-  allowedTypes.includes(file.mimetype)
-    ? cb(null, true)
-    : cb(new Error("Format non supporté. Utilisez JPG, PNG ou WebP."));
-};
-
-const upload = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max
-});
-
-
-
 // GET list — pagination + filters (category, search, lowStock)
 router.get("/getAllProduits", authMiddleware, readLimiter, validate(listProduitsSchema), produitController.getAllProduits);
 
@@ -44,10 +19,10 @@ router.get("/getAllProduits", authMiddleware, readLimiter, validate(listProduits
 router.get("/getProduitById/:id", authMiddleware, readLimiter, validate({ params: idParam }), produitController.getProduitById);
 
 // POST create
-router.post("/createProduit", authMiddleware, uploadLimiter, upload.single("image"), validate(createProduitSchema), produitController.createProduit);
+router.post("/createProduit", authMiddleware, uploadLimiter, parseImage, validate(createProduitSchema), uploadToCloudinary, produitController.createProduit);
 
 // PUT update
-router.put("/updateProduit/:id", authMiddleware, uploadLimiter, upload.single("image"), validate({ params: idParam, ...updateProduitSchema }),produitController.updateProduit);
+router.put("/updateProduit/:id", authMiddleware, uploadLimiter, parseImage, validate({ params: idParam, ...updateProduitSchema }), uploadToCloudinary,produitController.updateProduit);
 
 // DELETE remove
 router.delete("/deleteProduit/:id", authMiddleware, validate({ params: idParam }), produitController.deleteProduit);

@@ -1,12 +1,18 @@
 require("dotenv").config();
 const http = require("http");
 const express = require("express");
-const path = require("path");
 const morgan = require("morgan");
 const { globalLimiter, adminLimiter } = require("./config/rateLimiter");
-const fs = require("fs"); 
+
+// Fail fast on a missing/weak JWT secret in production
+if (process.env.NODE_ENV === "production" && (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32 || /change-me|your_very_secret/i.test(process.env.JWT_SECRET))) {
+  console.error("JWT_SECRET manquant ou trop faible (32 caractères minimum en production).");
+  process.exit(1);
+}
 
 const app = express();
+app.disable("x-powered-by");
+app.use(require("helmet")({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 const PORT = process.env.PORT || 3000;
 const cors = require("cors");
 
@@ -27,10 +33,6 @@ app.use(morgan("dev"));
 // Rate limiting: back-office routes get a looser limit than the public store
 app.use(["/api/admin", "/api/auth"], adminLimiter);
 app.use("/api", globalLimiter);
-
-fs.mkdirSync(path.join(__dirname, "uploads"), { recursive: true });
-// Serve uploaded images
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ─── Admin Routes
 app.use("/api/auth", require("./router/admin.auth.router"));
@@ -61,7 +63,13 @@ app.use((err, req, res, next) => {
     return res.status(400).json({ message: "Fichier trop volumineux. Max 5 Mo." });
   }
 
-  res.status(500).json({ message: err.message || "Erreur serveur interne." });
+  if (err.name === "MulterError") {
+    return res.status(400).json({ message: "Envoi de fichier invalide." });
+  }
+  if (err.status === 400) return res.status(400).json({ message: err.message });
+
+  // Never leak internal error details to the client
+  res.status(500).json({ message: "Erreur serveur interne." });
 });
 
 // ─── HTTP Server ──────────────────────────────────────────────────────────────

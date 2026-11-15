@@ -13,7 +13,7 @@ A secure and fully-featured REST API for managing a Tunisian football e-commerce
 | ORM              | Prisma v5 + MySQL               |
 | Authentication   | JWT (Access Token + Refresh Token) |
 | Validation       | Zod v4                          |
-| File Uploads     | Multer                          |
+| File Uploads     | Multer (memory) → Cloudinary    |
 | Rate Limiting    | express-rate-limit              |
 | Logging          | Winston + Morgan                |
 
@@ -55,7 +55,6 @@ football-tunisie/
 ├── prisma/
 │   ├── schema.prisma           # Database schema
 │   └── seed.js                 # Seed script
-├── uploads/                    # Uploaded product images
 ├── .env                        # Environment variables (not committed)
 └── .env.example                # Environment variable template
 ```
@@ -135,7 +134,7 @@ docker compose down                        # stop
 
 - Store: http://localhost:8080 — API (for the admin back-office): http://localhost:3000
 - The tables are created automatically when the API starts (`prisma db push`).
-- Database and product images are kept in Docker volumes (`db-data`, `uploads`).
+- The database is kept in a Docker volume (`db-data`); product images live on Cloudinary (set the `CLOUDINARY_*` variables in a `.env` next to `docker-compose.yml`).
 - The passwords and `JWT_SECRET` in `docker-compose.yml` are for local development only.
 
 ---

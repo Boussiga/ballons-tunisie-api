@@ -115,7 +115,7 @@ describe("store: a 10 % offer lowers the price of the selected products by 10 %"
 
 describe("order: the 10 % is charged only on the selected products", () => {
   const client = { nomClient: "Ali", telephoneClient: "98123456", adresseLivraison: "12 rue de Sfax" };
-  const tx = { commande: { create: jest.fn() }, produit: { update: jest.fn() } };
+  const tx = { commande: { create: jest.fn() }, produit: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) } };
 
   beforeEach(() => {
     prisma.produit.findMany.mockResolvedValue([BALLON_A, BALLON_C]);

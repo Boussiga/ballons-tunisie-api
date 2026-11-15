@@ -30,7 +30,8 @@ const passerCommandeSchema = {
       .trim(),
     lignes: z
       .array(ligneItem, { required_error: "Les lignes de commande sont requises." })
-      .min(1, "La commande doit avoir au moins une ligne."),
+      .min(1, "La commande doit avoir au moins une ligne.")
+      .max(20, "Maximum 20 lignes par commande."),
   }),
 };
 

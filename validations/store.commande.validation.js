@@ -1,6 +1,6 @@
 const { z } = require("zod");
 
-// ─── Line item (product or pack, optional offer) ──────────────────────────────
+// Line item (product or pack, optional offer)
 const ligneItem = z
   .object({
     produitId: z.number().int().positive("produitId doit être un entier positif.").optional(),
@@ -12,7 +12,7 @@ const ligneItem = z
     message: "Chaque ligne doit avoir un produitId ou un packId.",
   });
 
-// ─── Place order schema ───────────────────────────────────────────────────────
+// Place order schema
 const passerCommandeSchema = {
   body: z.object({
     nomClient: z

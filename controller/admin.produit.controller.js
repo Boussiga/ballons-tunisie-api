@@ -2,7 +2,7 @@ const prisma = require("../config/prisma");
 const { deleteImage } = require("../middelwhere/upload.middleware");
 
 /**
- * @desc  Get all products — with Zod pagination
+ * @desc  Get all products: with Zod pagination
  * @route GET /api/admin/produits
  * @access Private
  */
@@ -115,7 +115,7 @@ const updateProduit = async (req, res) => {
     if (req.file) data.imageUrl = req.file.url;
 
     const produit = await prisma.produit.update({ where: { id }, data });
-    if (req.file && exists.imageUrl) await deleteImage(exists.imageUrl); // replace → remove the old one
+    if (req.file && exists.imageUrl) await deleteImage(exists.imageUrl); // replace -> remove the old one
     res.status(200).json({ message: "Produit mis à jour.", produit });
   } catch (error) {
     if (req.file) await deleteImage(req.file.publicId);

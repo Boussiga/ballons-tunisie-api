@@ -7,8 +7,17 @@ const { FRAIS_LIVRAISON, totalAvecLivraison } = require("../utils/commande");
  * @route POST /api/store/commandes
  * @access Public
  */
+class StockError extends Error {}
+
 const passerCommande = async (req, res) => {
-  const { nomClient, telephoneClient, adresseLivraison, lignes } = req.body;
+  const { nomClient, telephoneClient, adresseLivraison } = req.body;
+  // Same product/pack/offer repeated on several lines → one line (stock check must see the total)
+  const merged = new Map();
+  for (const l of req.body.lignes) {
+    const key = `${l.produitId || ""}|${l.packId || ""}|${l.offreId || ""}`;
+    merged.has(key) ? (merged.get(key).quantite += l.quantite) : merged.set(key, { ...l });
+  }
+  const lignes = [...merged.values()];
   try {
     const now = new Date();
 
@@ -83,10 +92,12 @@ const passerCommande = async (req, res) => {
 
       for (const ligne of lignes) {
         if (ligne.produitId) {
-          await tx.produit.update({
-            where: { id: ligne.produitId },
+          // Conditional decrement: if another order took the stock in the meantime, abort (no overselling)
+          const { count } = await tx.produit.updateMany({
+            where: { id: ligne.produitId, stock: { gte: ligne.quantite } },
             data: { stock: { decrement: ligne.quantite } },
           });
+          if (count === 0) throw new StockError();
         }
       }
       return newCommande;
@@ -97,6 +108,9 @@ const passerCommande = async (req, res) => {
       commande,
     });
   } catch (error) {
+    if (error instanceof StockError) {
+      return res.status(409).json({ message: "Stock insuffisant : un article vient d'être épuisé. Mettez à jour votre panier." });
+    }
     console.error("Erreur passerCommande:", error);
     res.status(500).json({ message: "Erreur serveur." });
   }

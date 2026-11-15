@@ -87,13 +87,18 @@ async function main() {
   console.log("Starting seed...");
 
   // Create default admin
-  const hashedPassword = await bcrypt.hash("Admin@2024", 12);
+  // Set SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD in .env; otherwise a random password is generated and printed once.
+  const adminEmail = process.env.SEED_ADMIN_EMAIL || "admin@football-tunisie.tn";
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD || require("crypto").randomBytes(9).toString("base64url") + "A1!";
+  const hashedPassword = await bcrypt.hash(adminPassword, 12);
+  const existingAdmin = await prisma.administrateur.findUnique({ where: { email: adminEmail } });
+  const passwordApplied = !existingAdmin || Boolean(process.env.SEED_ADMIN_PASSWORD);
   const admin = await prisma.administrateur.upsert({
-    where: { email: "admin@football-tunisie.tn" },
-    update: {},
+    where: { email: adminEmail },
+    update: process.env.SEED_ADMIN_PASSWORD ? { motDePasse: hashedPassword } : {},
     create: {
       nom: "Administrateur",
-      email: "admin@football-tunisie.tn",
+      email: adminEmail,
       motDePasse: hashedPassword,
     },
   });
@@ -262,7 +267,7 @@ async function main() {
 
   console.log("\n🎉 Seed completed successfully!");
   console.log("📧 Admin email:", admin.email);
-  console.log("🔑 Admin password: Admin@2024");
+  console.log(passwordApplied ? `🔑 Admin: ${adminEmail} / ${adminPassword}` : `🔑 Admin ${adminEmail} existe déjà : mot de passe inchangé (définissez SEED_ADMIN_PASSWORD dans .env pour le changer).`);
 }
 
 main()

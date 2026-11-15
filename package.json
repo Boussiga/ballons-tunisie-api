@@ -10,7 +10,9 @@
     "db:seed": "node prisma/seed.js",
     "db:studio": "npx prisma studio",
     "test": "jest",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "images:list": "node scripts/list-images.js",
+    "images:seed": "node scripts/seed-images.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -21,10 +23,12 @@
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.11.0",
     "cors": "^2.8.6",
     "dotenv": "^18.0.4",
     "express": "^5.2.1",
     "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.12.1",
     "multer": "^2.4.0",

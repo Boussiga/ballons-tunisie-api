@@ -14,7 +14,8 @@ const { authLimiter } = require("../config/rateLimiter");
 const authController = require("../controller/admin.auth.controller");
 
 // Public routes
-router.post("/register", validate(registerSchema), authController.register);
+// Only an already-logged-in admin can create another admin (no public sign-up)
+router.post("/register", authMiddleware, validate(registerSchema), authController.register);
 router.post("/login", authLimiter, validate(loginSchema), authController.login);
 router.post("/refresh", authLimiter, validate(refreshSchema), authController.refreshToken);
 

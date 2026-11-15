@@ -1,4 +1,5 @@
 const prisma = require("../config/prisma");
+const { deleteImage } = require("../middelwhere/upload.middleware");
 
 /**
  * @desc  Get all products — with Zod pagination
@@ -82,7 +83,7 @@ const getProduitById = async (req, res) => {
 const createProduit = async (req, res) => {
   try {
     const { nom, categorieId, taille, prix, stock, description } = req.body;
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    const imageUrl = req.file ? req.file.url : null;
 
     const produit = await prisma.produit.create({
       data: { nom, categorieId, taille, prix, stock, description, imageUrl },
@@ -90,6 +91,7 @@ const createProduit = async (req, res) => {
 
     res.status(201).json({ message: "Produit créé avec succès.", produit });
   } catch (error) {
+    if (req.file) await deleteImage(req.file.publicId); // DB failed: don't leave an orphan image
     console.error("Erreur createProduit:", error);
     res.status(500).json({ message: "Erreur serveur." });
   }
@@ -105,15 +107,18 @@ const updateProduit = async (req, res) => {
   try {
     const exists = await prisma.produit.findUnique({ where: { id } });
     if (!exists) {
+      if (req.file) await deleteImage(req.file.publicId);
       return res.status(404).json({ message: "Produit introuvable." });
     }
 
     const data = { ...req.body };
-    if (req.file) data.imageUrl = `/uploads/${req.file.filename}`;
+    if (req.file) data.imageUrl = req.file.url;
 
     const produit = await prisma.produit.update({ where: { id }, data });
+    if (req.file && exists.imageUrl) await deleteImage(exists.imageUrl); // replace → remove the old one
     res.status(200).json({ message: "Produit mis à jour.", produit });
   } catch (error) {
+    if (req.file) await deleteImage(req.file.publicId);
     console.error("Erreur updateProduit:", error);
     res.status(500).json({ message: "Erreur serveur." });
   }
@@ -139,6 +144,7 @@ const deleteProduit = async (req, res) => {
   }
 
     await prisma.produit.delete({ where: { id } });
+    await deleteImage(exists.imageUrl);
     res.status(200).json({ message: "Produit supprimé avec succès." });
   } catch (error) {
     console.error("Erreur deleteProduit:", error);

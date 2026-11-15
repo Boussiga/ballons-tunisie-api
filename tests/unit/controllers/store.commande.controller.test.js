@@ -16,7 +16,7 @@ const OFFRE_ID = "22222222-2222-4222-8222-222222222222";
 const client = { nomClient: "Ali", telephoneClient: "98123456", adresseLivraison: "12 rue de Sfax" };
 
 // Fake transaction client: records created orders and stock updates
-const tx = { commande: { create: jest.fn() }, produit: { update: jest.fn() } };
+const tx = { commande: { create: jest.fn() }, produit: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) } };
 
 const setCatalogue = ({ produits = [], packs = [], offres = [] }) => {
   prisma.produit.findMany.mockResolvedValue(produits);
@@ -135,8 +135,8 @@ describe("passerCommande", () => {
       { quantite: 3, prixInitiale: 49.99, produitId: 1, offreId: OFFRE_ID },
       { quantite: 1, prixInitiale: 120, packId: PACK_ID },
     ]);
-    expect(tx.produit.update).toHaveBeenCalledTimes(1);
-    expect(tx.produit.update).toHaveBeenCalledWith({ where: { id: 1 }, data: { stock: { decrement: 3 } } });
+    expect(tx.produit.updateMany).toHaveBeenCalledTimes(1);
+    expect(tx.produit.updateMany).toHaveBeenCalledWith({ where: { id: 1, stock: { gte: 3 } }, data: { stock: { decrement: 3 } } });
   });
 
   it("adds the delivery fee once per order, whatever the quantity", async () => {
@@ -191,5 +191,28 @@ describe("suiviCommande", () => {
     expect(body).toMatchObject({ id: "cmd-1", statut: "en_attente", nomClient: "Ali", fraisLivraison: 10, total: 110 });
     expect(body).not.toHaveProperty("adresseLivraison");
     expect(body).not.toHaveProperty("telephoneClient");
+  });
+});
+
+describe("passerCommande: concurrency and duplicates", () => {
+  const body = (lignes) => ({ nomClient: "Test", telephoneClient: "20123456", adresseLivraison: "1 rue Test, Tunis", lignes });
+
+  it("returns 409 (and no order) when the stock was taken by another order meanwhile", async () => {
+    prisma.produit.findMany.mockResolvedValue([{ id: 1, nom: "Ballon", prix: 50, stock: 5 }]);
+    prisma.pack.findMany.mockResolvedValue([]);
+    prisma.offre.findMany.mockResolvedValue([]);
+    tx.produit.updateMany.mockResolvedValueOnce({ count: 0 });
+    const res = mockResponse();
+    await passerCommande(mockRequest({ body: body([{ produitId: 1, quantite: 2 }]) }), res);
+    expect(res.status).toHaveBeenCalledWith(409);
+  });
+
+  it("merges duplicate lines so the stock check sees the real total", async () => {
+    prisma.produit.findMany.mockResolvedValue([{ id: 1, nom: "Ballon", prix: 50, stock: 5 }]);
+    prisma.pack.findMany.mockResolvedValue([]);
+    prisma.offre.findMany.mockResolvedValue([]);
+    const res = mockResponse();
+    await passerCommande(mockRequest({ body: body([{ produitId: 1, quantite: 3 }, { produitId: 1, quantite: 3 }]) }), res);
+    expect(res.status).toHaveBeenCalledWith(400); // 6 requested > 5 in stock
   });
 });

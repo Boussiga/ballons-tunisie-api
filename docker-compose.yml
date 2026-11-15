@@ -1,36 +1,56 @@
-# Start everything:   docker compose up --build
-# Store:              http://localhost:8080
-# API (back-office):  http://localhost:3000
+# Production stack: MySQL + API + store + back office.
 #
-# These values are for local development. Change the passwords and JWT_SECRET
-# before using it on a real server.
+#   1. cp .env.production.example .env.production   and fill in every value
+#   2. docker compose --env-file .env.production up -d --build
+#   3. docker compose --env-file .env.production exec api npm run admin:create   (first admin account)
+#
+# Store: port 8080, back office: port 8081. Put an HTTPS reverse proxy (or the host's
+# load balancer) in front of both. The API and MySQL are not reachable from outside:
+# the store and the back office call the API through their own nginx (/api/...).
+# Never run "npm run db:seed" here: it is the demo seed and it empties the database
+# (it refuses to run anyway, NODE_ENV is production).
 
 services:
   db:
     image: mysql:8.4
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: foot
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-ballons}
+      MYSQL_USER: ${MYSQL_USER:-ballons}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env.production}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env.production}
     volumes:
       - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
 
   api:
     build: .
     environment:
-      DATABASE_URL: mysql://root:root@db:3306/foot
-      JWT_SECRET: change-me
-      FRONTEND_URL: http://localhost:8080,http://localhost:5173,http://localhost:5174
-      TRUST_PROXY: 1
-      # Cloudinary credentials are read from a ".env" file next to this compose file
-      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
-      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
-      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      NODE_ENV: production
+      DATABASE_URL: mysql://${MYSQL_USER:-ballons}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE:-ballons}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env.production}
+      FRONTEND_URL: ${FRONTEND_URL:?Set FRONTEND_URL in .env.production}
+      # Proxies between the client and the API: 1 = store/back-office nginx only,
+      # 2 = an HTTPS reverse proxy in front of them (see .env.production.example)
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:?Set CLOUDINARY_CLOUD_NAME in .env.production}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:?Set CLOUDINARY_API_KEY in .env.production}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:?Set CLOUDINARY_API_SECRET in .env.production}
+      # Separate folder so production images never mix with the demo ones
+      CLOUDINARY_FOLDER: ${CLOUDINARY_FOLDER:-ballons-tunisie/production}
+      # Only used by "npm run admin:create"
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000" # reachable from the server itself only
     depends_on:
-      - db
-    # MySQL needs a few seconds on the first start: the API restarts until it is ready
-    restart: on-failure
+      db:
+        condition: service_healthy
+    restart: unless-stopped
 
   front:
     build: ../ballons-tunisie-frontoffice
@@ -38,6 +58,15 @@ services:
       - "8080:80"
     depends_on:
       - api
+    restart: unless-stopped
+
+  admin:
+    build: ../ballons-tunisie-backoffice
+    ports:
+      - "8081:80"
+    depends_on:
+      - api
+    restart: unless-stopped
 
 volumes:
   db-data:

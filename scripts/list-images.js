@@ -1,13 +1,13 @@
 // Usage: npm run images:list
-// Lists every image stored on Cloudinary (folder ballons-tunisie/) and flags
+// Lists every image stored on Cloudinary in CLOUDINARY_FOLDER and flags
 // the ones no product uses anymore ("ORPHAN").
 require("dotenv").config();
-const { cloudinary, isConfigured } = require("../config/cloudinary");
+const { cloudinary, FOLDER, isConfigured } = require("../config/cloudinary");
 const prisma = require("../config/prisma");
 
 (async () => {
   if (!isConfigured()) throw new Error("Variables CLOUDINARY_* manquantes dans .env");
-  const { resources } = await cloudinary.api.resources({ type: "upload", prefix: "ballons-tunisie/", max_results: 500 });
+  const { resources } = await cloudinary.api.resources({ type: "upload", prefix: `${FOLDER}/`, max_results: 500 });
   const produits = await prisma.produit.findMany({ select: { id: true, nom: true, imageUrl: true, images: { select: { url: true } } } });
   // An image is used when it is the main image or part of a product gallery
   const used = new Map(produits.flatMap((p) => [p.imageUrl, ...p.images.map((i) => i.url)].filter(Boolean).map((url) => [url, p])));

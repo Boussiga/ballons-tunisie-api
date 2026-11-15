@@ -1,4 +1,4 @@
-# ⚽ Football Tunisie — Admin REST API
+# Football Tunisie - Admin REST API
 
 A secure and fully-featured REST API for managing a Tunisian football e-commerce platform. Built with **Express.js**, **Prisma ORM** and **MySQL**.
 
@@ -13,17 +13,17 @@ A secure and fully-featured REST API for managing a Tunisian football e-commerce
 | ORM              | Prisma v5 + MySQL               |
 | Authentication   | JWT (Access Token + Refresh Token) |
 | Validation       | Zod v4                          |
-| File Uploads     | Multer (memory) → Cloudinary    |
+| File Uploads     | Multer (memory) -> Cloudinary    |
 | Rate Limiting    | express-rate-limit              |
 | Logging          | Winston + Morgan                |
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 football-tunisie/
-├── app.js                      # Entry point — Express setup, middleware, routes
+├── app.js                      # Entry point - Express setup, middleware, routes
 ├── config/
 │   ├── prisma.js               # Prisma client singleton
 │   └── rateLimiter.js          # Global, auth, upload and read limiters
@@ -132,7 +132,7 @@ docker compose exec api npm run db:seed    # optional, in another terminal: demo
 docker compose down                        # stop
 ```
 
-- Store: http://localhost:8080 — API (for the admin back-office): http://localhost:3000
+- Store: http://localhost:8080 - API (for the admin back-office): http://localhost:3000
 - The tables are created automatically when the API starts (`prisma db push`).
 - The database is kept in a Docker volume (`db-data`); product images live on Cloudinary (set the `CLOUDINARY_*` variables in a `.env` next to `docker-compose.yml`).
 - The passwords and `JWT_SECRET` in `docker-compose.yml` are for local development only.
@@ -148,10 +148,10 @@ The API uses a **dual-token strategy**:
 | Access Token  | 15 min   | Sent in `Authorization: Bearer <token>` header |
 | Refresh Token | 7 days   | Stored in DB, used to get a new access token   |
 
-**Login** → receive `accessToken` + `refreshToken`  
-**Refresh** → exchange old refresh token for a new access token (**rotation**)  
-**Logout** → revoke current refresh token  
-**Logout All** → revoke all refresh tokens for the user
+**Login** -> receive `accessToken` + `refreshToken`  
+**Refresh** -> exchange old refresh token for a new access token (**rotation**)  
+**Logout** -> revoke current refresh token  
+**Logout All** -> revoke all refresh tokens for the user
 
 ---
 
@@ -163,12 +163,12 @@ All routes are prefixed with `/api/admin`.
 
 | Method | Endpoint         | Description                  | Auth |
 |--------|------------------|------------------------------|------|
-| POST   | `/register`      | Create a new admin           | ❌   |
-| POST   | `/login`         | Login — returns tokens       | ❌   |
-| POST   | `/refresh`       | Refresh access token         | ❌   |
-| POST   | `/logout`        | Logout current device        | ✅   |
-| POST   | `/logout-all`    | Logout all devices           | ✅   |
-| GET    | `/profil`        | Get logged-in admin profile  | ✅   |
+| POST   | `/register`      | Create a new admin           | No   |
+| POST   | `/login`         | Login - returns tokens       | No   |
+| POST   | `/refresh`       | Refresh access token         | No   |
+| POST   | `/logout`        | Logout current device        | Yes  |
+| POST   | `/logout-all`    | Logout all devices           | Yes  |
+| GET    | `/profil`        | Get logged-in admin profile  | Yes  |
 
 ###  Products (`/produits`)
 
@@ -223,13 +223,13 @@ Every new order (store or admin) carries a flat **10 TND delivery fee** (`fraisL
 | GET    | `/getStatistiquesVentes/ventes` | Sales stats by period (week/month/year)  |
 | GET    | `/getStatistiquesDetaillees?dateDebut=&dateFin=&granularite=` | Detailed business statistics (see below) |
 
-#### Detailed statistics — `/getStatistiquesDetaillees`
+#### Detailed statistics - `/getStatistiquesDetaillees`
 
 | Parameter     | Format                        | Default                                   |
 |---------------|-------------------------------|-------------------------------------------|
 | `dateDebut`   | `AAAA-MM-JJ`                  | 29 days before `dateFin`                  |
 | `dateFin`     | `AAAA-MM-JJ` (included)       | today                                     |
-| `granularite` | `jour` | `semaine` | `mois` | auto: ≤ 31 days → jour, ≤ 6 months → semaine, else mois |
+| `granularite` | `jour` | `semaine` | `mois` | auto: ≤ 31 days -> jour, ≤ 6 months -> semaine, else mois |
 
 Revenue counts every order that is not `annulee`. Every figure is compared with the previous period of the same length.
 
@@ -299,6 +299,6 @@ npm run db:studio    # Open Prisma Studio (visual DB explorer)
 
 ---
 
-## 📄 License
+## License
 
 ISC © Football Tunisie
